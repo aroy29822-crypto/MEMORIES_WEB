@@ -195,9 +195,9 @@ def feed():
 
     me = session["user"]
     user = users.find_one({"email":me})
-    docs = list(posts.find().sort("time",-1))
+    docs = list(posts.find().sort("time",1))
 
-    firstname = user.get("first_name","Friend")
+    firstname = (user or {}).get("first_name", "Friend")
 
     # pick random quote
     quote = random.choice(QUOTES)
