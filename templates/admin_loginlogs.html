@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container" style="margin-top:120px;color:white">
+    <h2>Login Logs</h2>
+    <table class="table text-light">
+        <tr>
+            <th>Email</th>
+            <th>Time</th>
+        </tr>
+        {% for l in logs %}
+        <tr>
+            <td>{{ l.email }}</td>
+            <td>{{ l.time }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

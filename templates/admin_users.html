@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="container" style="margin-top:120px;color:white">
+    <h2>All Users</h2>
+
+    <table class="table text-light">
+        <tr>
+            <th>Email</th>
+            <th>Profile</th>
+        </tr>
+
+        {% for u in users %}
+        <tr>
+            <td>{{ u.email }}</td>
+            <td><a href="{{ url_for('admin_user_profile', email=u.email) }}" class="btn btn-primary btn-sm">Open</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

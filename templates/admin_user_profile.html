@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container" style="margin-top:120px;color:white">
+    <h2>Posts by {{ email }}</h2>
+
+    {% for p in docs %}
+    <div class="mb-4" style="background:rgba(255,255,255,.1);padding:12px;border-radius:10px;">
+        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
+        <video src="{{ p.url }}" controls style="width:260px;height:260px;border-radius:10px"></video>
+        {% else %}
+        <img src="{{ p.url }}" style="width:260px;height:260px;border-radius:10px;object-fit:cover">
+        {% endif %}
+        <div>{{ p.place }} — {{ p.date }}</div>
+        <small>{{ p.desc }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

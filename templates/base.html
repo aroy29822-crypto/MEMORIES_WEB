@@ -4,46 +4,106 @@
 <head>
     <meta charset="utf-8">
     <title>MEMORIES</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
-            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat;
-            background-attachment: fixed;
-            backdrop-filter: blur(8px);
+            margin: 0;
+            padding: 0;
+            background: rgb(231, 220, 220);
+            overflow-x: hidden;
         }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat;
+            filter: blur(6px);
+            transform: scale(1.15);
+            /* safe for edges */
+            z-index: -2;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: -1;
+        }
+
 
         nav a {
             color: white;
             font-weight: 600;
-            margin-right: 15px;
+            margin-right: 18px;
             text-decoration: none;
         }
 
         nav a:hover {
             text-decoration: underline;
         }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity .4s;
+        }
+
+        .loader-circle {
+            width: 50px;
+            height: 50px;
+            border: 6px solid rgba(255, 255, 255, .4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
+
+    <script>
+        window.addEventListener("load", () => {
+            document.getElementById("loader").style.opacity = "0";
+            setTimeout(() => document.getElementById("loader").style.display = "none", 400);
+        });
+    </script>
 </head>
 
 <body class="p-4 text-light">
+
+    <!-- blur overlay -->
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(14px);z-index:-1;"></div>
+
+    <!-- loader -->
+    <div id="loader">
+        <div class="loader-circle"></div>
+    </div>
 
     <nav class="mb-4">
         {% if session.user %}
         Logged in as <b>{{ session.user }}</b> |
         <a href="{{ url_for('feed') }}">Home</a>
         <a href="{{ url_for('upload') }}">Upload</a>
-        <a href="{{ url_for('profile') }}" class="btn btn-outline-light ms-2">Profile</a>
+        <a href="{{ url_for('profile') }}">Profile</a>
+
         {% if session.user == ADMIN_EMAIL %}
-        | <a href="{{url_for('admin_feedback')}}">Feedbacks</a>
+        <a href="{{url_for('admin')}}">Admin</a>
+        <a href="{{url_for('admin_feedback')}}">Feedbacks</a>
         {% endif %}
 
-
-        {% if session['user'] == ADMIN_EMAIL %}
-        <a href="/admin" class="btn btn-outline-warning mx-3">Admin</a>
-        {% endif %}
-
-        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        <a href="{{ url_for('logout') }}">Logout</a>
         {% endif %}
     </nav>
 
@@ -56,7 +116,6 @@
     {% endwith %}
 
     {% block body %}{% endblock %}
-
 </body>
 
 </html>

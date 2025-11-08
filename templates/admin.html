@@ -4,12 +4,16 @@
 <div class="container py-4 text-light">
     <h2>Admin Panel</h2>
     <hr>
+    <a class="ghost btn" href="/admin/users">All Users</a>
+    <a class="ghost btn" href="/admin/loginlogs">Login Logs</a>
 
     <div class="row row-cols-1 row-cols-md-3 g-4">
+
 
         {% for d in docs %}
         <div class="col">
             <div class="card bg-dark bg-opacity-50 text-light border rounded-3 shadow-sm">
+
 
                 {% set is_video = d.url.endswith('.mp4') or d.url.endswith('.webm') or d.url.endswith('.mov') %}
 

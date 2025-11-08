@@ -1,65 +1,63 @@
 {% extends "base.html" %}
 {% block body %}
 
+<!-- WELCOME NAME POPUP -->
+{% if show_popup %}
+<div id="welcome-box">
+    Hi {{ firstname }}!<br>
+    <small>{{ quote }}</small>
+</div>
+{% endif %}
+
 <style>
-    .memory-row {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 100px 0;
-        padding: 0 0px;
-        gap: 0px;
-        opacity: 0;
-        transform: translateY(50px);
-        transition: all .7s ease;
-    }
-
-    .memory-row.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .memory-pic {
-        width: 330px;
-        height: 330px;
-        border-radius: 18px;
-        object-fit: cover;
-        box-shadow: 0 0 22px rgba(0, 0, 0, .6);
-    }
-
-    .memory-text {
-        width: 70%;
-        color: white;
-        font-size: 20px;
-        line-height: 1.4;
-        white-space: pre-line;
-    }
-
-    #feedback-box {
+    /* welcome popup */
+    #welcome-box {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
+        bottom: 20px;
+        left: -350px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 18px 25px;
+        border-radius: 12px;
+        font-size: 19px;
+        z-index: 999999;
+        animation: slideIn 0.6s forwards, slideOut 0.6s forwards 2.6s;
     }
 
-    @keyframes bounceIn {
-        0% {
-            transform: translateY(60px);
+    @keyframes slideIn {
+        from {
+            left: -350px;
             opacity: 0;
         }
 
-        60% {
-            transform: translateY(-20px);
+        to {
+            left: 30px;
             opacity: 1;
-        }
-
-        100% {
-            transform: translateY(0);
         }
     }
 
-    .memory-row.show {
-        animation: bounceIn .9s ease forwards;
+    @keyframes slideOut {
+        to {
+            left: 400px;
+            opacity: 0;
+        }
+    }
+
+
+    .memory-text {
+        width: auto;
+        color: white;
+        font-size: 20px;
+        line-height: 1.4;
+    }
+
+
+    /* FEEDBACK BOX RIGHT BOTTOM */
+    #feedback-box {
+        position: fixed;
+        bottom: 35px;
+        right: 35px;
+        z-index: 9999;
     }
 </style>
 
@@ -76,16 +74,17 @@
         {% endif %}
 
         <div class="memory-text" style="{% if loop.index0%2==1 %}text-align:right;{% endif %}">
-            <b>{{ p.place }}</b> — {{ p.date }}
-
-            <br><br>{{ p.desc }}
+            <b>{{ p.place }}</b> — {{ p.date }} <br><br>
+            {{ p.desc }}
         </div>
 
     </div>
     {% endfor %}
+
 </div>
 
 
+<!-- FEEDBACK BOX -->
 <div id="feedback-box">
     <form action="/feedback" method="POST">
         <textarea name="msg" placeholder="Feedback..."
@@ -96,13 +95,24 @@
 
 
 <script>
+    setTimeout(() => { let w = document.getElementById("welcome_msg"); if (w) w.style.display = "none"; }, 3500);
+
     const posts = document.querySelectorAll(".memory-row");
     window.addEventListener("scroll", () => {
-        posts.forEach(x => {
-            const t = x.getBoundingClientRect().top;
-            if (t < window.innerHeight - 80) { x.classList.add("show") }
-        })
+        posts.forEach(p => {
+            const pos = p.getBoundingClientRect().top;
+            if (pos < window.innerHeight - 90) { p.classList.add("show"); }
+        });
     });
 </script>
+{% if session.get('just_logged') %}
+<div id="welcome-box">
+    Hi {{ firstname }}!<br>
+    <small>“Every picture is a story we lived.”</small>
+</div>
+<script>
+    sessionStorage.setItem("removeWelcome", "1");
+</script>
+{% endif %}
 
 {% endblock %}
