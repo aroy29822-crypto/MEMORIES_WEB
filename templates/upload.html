@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Upload Memory</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat;
+            backdrop-filter: blur(4px);
+        }
+
+        .box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(3px);
+            padding: 40px;
+            border-radius: 12px;
+            width: 360px;
+            color: white;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            background: #ff3366;
+            border: none;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+        }
+
+        a {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h2>Upload Memory</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <input type="text" name="place" placeholder="Place" required>
+            <input type="date" name="date" required>
+            <textarea name="desc" placeholder="Describe the moment" required></textarea>
+            <button type="submit">Upload</button>
+        </form>
+
+        <br>
+        <a href="/feed">Back to feed</a>
+    </div>
+</body>
+
+</html>

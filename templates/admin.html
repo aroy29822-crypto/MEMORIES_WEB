@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="container py-4 text-light">
+    <h2>Admin Panel</h2>
+    <hr>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+
+        {% for d in docs %}
+        <div class="col">
+            <div class="card bg-dark bg-opacity-50 text-light border rounded-3 shadow-sm">
+
+                {% set is_video = d.url.endswith('.mp4') or d.url.endswith('.webm') or d.url.endswith('.mov') %}
+
+                {% if is_video %}
+                <video class="card-img-top" src="{{ d.url }}" controls></video>
+                {% else %}
+                <img class="card-img-top" src="{{ d.url }}">
+                {% endif %}
+
+                <div class="card-body">
+                    <div class="small opacity-75">{{ d.owner }} • {{ d.place }} • {{ d.date }}</div>
+                    <p style="white-space:pre-wrap">{{ d.desc }}</p>
+
+                    <a class="btn" href="{{ url_for('edit_post', id=d._id) }}">Edit</a>
+
+
+                    <form action="{{ url_for('delete_post', id=d._id) }}" method="POST" style="display:inline-block"
+                        onsubmit="return confirm('Delete?')">
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+{% endblock %}

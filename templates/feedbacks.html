@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="container text-light mt-5">
+    <h2>All Feedbacks</h2>
+    <hr style="border-color:rgba(255,255,255,0.2);">
+
+    {% for f in fbs %}
+    <div class="p-3 mb-3 rounded" style="background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);">
+        <b>{{ f.name }}</b> — <span style="font-size:12px;">{{ f.time }}</span>
+        <p>{{ f.fb }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Edit Memory</title>
+    <style>
+        :root {
+            --bg: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png");
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial;
+            color: #fff;
+            min-height: 100vh;
+            background: var(--bg) center/cover fixed no-repeat;
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box {
+            width: 420px;
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 12px;
+            padding: 18px;
+            backdrop-filter: blur(6px);
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #ff3366;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        a {
+            color: #fff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h3>Edit Memory</h3>
+        <form method="POST">
+            <div class="row">
+                <input type="text" name="place" value="{{ doc.place }}" placeholder="Place" required>
+                <input type="date" name="date" value="{{ doc.date }}" required>
+            </div>
+            <textarea name="desc" rows="5" placeholder="Description" required>{{ doc.desc }}</textarea>
+            <button type="submit">Save</button>
+        </form>
+        <div style="margin-top:10px;"><a href="/feed">Back</a></div>
+    </div>
+</body>
+
+</html>

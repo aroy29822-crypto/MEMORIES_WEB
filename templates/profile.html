@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="container py-4">
+
+    <h2 class="text-light mb-4">My Memories</h2>
+
+    {% for p in docs %}
+    <div class="row mb-5 align-items-start {% if loop.index is odd %} flex-row {% else %} flex-row-reverse {% endif %}">
+
+        <div class="col-md-6 text-center">
+            {% if "mp4" in p.url or "webm" in p.url or "mkv" in p.url or "mov" in p.url %}
+            <video src="{{ p.url }}" controls class="img-fluid rounded shadow-lg" style="max-height:300px;"></video>
+            {% else %}
+            <img src="{{ p.url }}" class="img-fluid rounded shadow-lg" style="max-height:300px;object-fit:cover;">
+            {% endif %}
+        </div>
+
+        <div class="col-md-6 text-light" style="{% if loop.index is even %}text-align:right{% endif %}">
+            <h3>{{ p.place }}</h3>
+            <h6>{{ p.date }}</h6>
+            <p style="white-space:pre-line">{{ p.desc }}</p>
+
+            <a href="{{ url_for('edit_post', id=p._id) }}" class="btn btn-warning btn-sm mt-2">Edit</a>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

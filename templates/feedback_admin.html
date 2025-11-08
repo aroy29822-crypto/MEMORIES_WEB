@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="container text-light py-4">
+  <h3>All Feedbacks</h3>
+  <hr class="border-light">
+
+  {% for f in docs %}
+    <div class="mb-3 p-3 bg-dark bg-opacity-50 rounded">
+      <b>{{f.user}}</b>
+      <p>{{f.msg}}</p>
+      <small>{{f.time}}</small>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

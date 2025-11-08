@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block body %}
+
+<style>
+    .memory-row {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 100px 0;
+        padding: 0 0px;
+        gap: 0px;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all .7s ease;
+    }
+
+    .memory-row.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .memory-pic {
+        width: 330px;
+        height: 330px;
+        border-radius: 18px;
+        object-fit: cover;
+        box-shadow: 0 0 22px rgba(0, 0, 0, .6);
+    }
+
+    .memory-text {
+        width: 70%;
+        color: white;
+        font-size: 20px;
+        line-height: 1.4;
+        white-space: pre-line;
+    }
+
+    #feedback-box {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+    }
+
+    @keyframes bounceIn {
+        0% {
+            transform: translateY(60px);
+            opacity: 0;
+        }
+
+        60% {
+            transform: translateY(-20px);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    .memory-row.show {
+        animation: bounceIn .9s ease forwards;
+    }
+</style>
+
+
+<div class="container py-5">
+
+    {% for p in docs %}
+    <div class="memory-row" style="{% if loop.index0%2==1 %}flex-direction:row-reverse;{% endif %}">
+
+        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
+        <video src="{{ p.url }}" controls class="memory-pic"></video>
+        {% else %}
+        <img src="{{ p.url }}" class="memory-pic">
+        {% endif %}
+
+        <div class="memory-text" style="{% if loop.index0%2==1 %}text-align:right;{% endif %}">
+            <b>{{ p.place }}</b> — {{ p.date }}
+
+            <br><br>{{ p.desc }}
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+
+<div id="feedback-box">
+    <form action="/feedback" method="POST">
+        <textarea name="msg" placeholder="Feedback..."
+            style="width:230px;height:70px;border-radius:8px;padding:8px;"></textarea>
+        <button class="btn btn-primary btn-sm mt-2 w-100">Send</button>
+    </form>
+</div>
+
+
+<script>
+    const posts = document.querySelectorAll(".memory-row");
+    window.addEventListener("scroll", () => {
+        posts.forEach(x => {
+            const t = x.getBoundingClientRect().top;
+            if (t < window.innerHeight - 80) { x.classList.add("show") }
+        })
+    });
+</script>
+
+{% endblock %}
