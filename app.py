@@ -11,6 +11,7 @@ import cloudinary.uploader
 load_dotenv()
 
 ALLOWED_EXT = {'png','jpg','jpeg','gif','mp4','mov','avi','mkv','webm'}
+print("DEBUG CLOUD KEY:", os.getenv("CLOUD_API_KEY"))
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUD_NAME"),
