@@ -97,14 +97,26 @@
     }
 
     @media(max-width:700px) {
-        #welcome-box {
+        .memory-row {
+            flex-wrap: nowrap;
+            /* always side-by-side */
+            gap: 18px;
+        }
+
+        .memory-pic {
+            width: 150px !important;
+            /* small image for mobile but still side aligned */
+            height: 150px !important;
+            flex-shrink: 0;
+        }
+
+        .memory-text {
             font-size: 16px;
-            padding: 14px 18px;
-            bottom: 14px;
-            left: 14px;
-            max-width: 190px;
+            line-height: 1.35;
+            text-align: justify;
         }
     }
+
 
     #zoomModal {
         position: fixed;
