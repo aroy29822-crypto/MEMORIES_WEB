@@ -4,28 +4,21 @@
 <style>
     .memory-row {
         opacity: 0;
-        transform: translateY(60px);
-        transition: all .55s ease-out;
-    }
-
-    .memory-row.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .memory-row {
+        transform: translateY(40px) scale(.97);
+        transition: all .5s;
         width: 100%;
         max-width: 1150px;
-        /* NEW ADD */
         margin: auto;
-        /* NEW ADD */
         display: flex;
         justify-content: center;
         align-items: flex-start;
         gap: 35px;
-        /* changed */
         margin-bottom: 60px;
-        /* changed */
+    }
+
+    .memory-row.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 
     .memory-pic {
@@ -35,6 +28,7 @@
         object-fit: cover;
         flex-shrink: 0;
         box-shadow: 0 0 22px rgba(0, 0, 0, .45);
+        cursor: pointer;
     }
 
     .memory-text {
@@ -48,7 +42,7 @@
     #feedback-box {
         opacity: 0;
         transform: translateY(30px);
-        transition: all .5s ease-out;
+        transition: all .5s;
         max-width: 270px;
         margin: auto;
         margin-top: 40px;
@@ -59,12 +53,8 @@
         transform: translateY(0);
     }
 
-
-    /* MOBILE */
     @media(max-width:700px) {
-
         .memory-row {
-            width: 100%;
             gap: 18px;
         }
 
@@ -79,19 +69,18 @@
         }
     }
 
-    /* WELCOME BOX POSITION + ANIMATION */
     #welcome-box {
         position: fixed;
         bottom: 18px;
         left: 18px;
         max-width: 240px;
-        background: rgba(0, 0, 0, 0.68);
+        background: rgba(0, 0, 0, .68);
         color: white;
         padding: 18px 22px;
         border-radius: 14px;
         font-size: 19px;
         z-index: 9999;
-        animation: slideIn 0.6s forwards, slideOut 0.6s forwards 2.6s;
+        animation: slideIn .6s forwards, slideOut .6s forwards 2.6s;
     }
 
     @keyframes slideIn {
@@ -127,14 +116,47 @@
             max-width: 190px;
         }
     }
+
+    #zoomModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .85);
+        backdrop-filter: blur(8px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999999;
+        animation: fadeInScale .4s ease-out;
+    }
+
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: scale(.8);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    #zoomModal img,
+    #zoomModal video {
+        max-width: 92vw;
+        max-height: 92vh;
+        border-radius: 14px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, .6);
+        object-fit: contain;
+        touch-action: pinch-zoom;
+    }
 </style>
 
 <div class="container py-5" style="max-width:1250px;margin:auto;">
 
     {% if show_popup %}
     <div id="welcome-box">
-        Hi {{ firstname }}!<br>
-        <small>{{ quote }}</small>
+        Hi {{ firstname }}!<br><small>{{ quote }}</small>
     </div>
     {% endif %}
 
@@ -142,22 +164,23 @@
     <div class="memory-row" style="{% if loop.index0%2==1 %}flex-direction:row-reverse;{% endif %}">
 
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
-        <video src="{{ p.url }}" controls class="memory-pic"></video>
+        <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
+            class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy">
+        </video>
         {% else %}
-        <img src="{{ p.url }}" class="memory-pic">
+        <img src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}"
+            class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
         {% endif %}
 
         <div class="memory-text" style="{% if loop.index0%2==1 %}text-align:right;{% endif %}">
-            <b>{{ p.place }}</b> — {{ p.date }}<br><br>
-            {{ p.desc }}
+            <b>{{ p.place }}</b> — {{ p.date }}<br><br>{{ p.desc }}
         </div>
 
     </div>
     {% endfor %}
-
 </div>
 
-<!-- FEEDBACK -->
+
 <div id="feedback-box" style="display:none;margin-top:80px;">
     <form action="/feedback" method="POST">
         <textarea name="msg" placeholder="Feedback..."
@@ -166,28 +189,49 @@
     </form>
 </div>
 
+<div id="zoomModal" onclick="closeZoom()">
+    <img id="zoomImg" class="zoomMedia">
+    <video id="zoomVid" controls class="zoomMedia"></video>
+</div>
 
 <script>
     document.addEventListener("scroll", () => {
         const fb = document.getElementById("feedback-box");
-        if (!fb) return;
-
         const scrollPos = window.scrollY + window.innerHeight;
-        const pageHeight = document.body.scrollHeight;
-        const threshold = 200; // Distance from bottom to trigger
-
-        if (scrollPos >= pageHeight - threshold) {
-            // Show feedback box
-            fb.style.display = "block";
-            setTimeout(() => fb.classList.add("show"), 10);
-        } else {
-            // Hide feedback box
-            fb.classList.remove("show");
-            setTimeout(() => fb.style.display = "none", 500);
-        }
+        if (scrollPos >= document.body.scrollHeight - 200) {
+            fb.style.display = "block"; setTimeout(() => fb.classList.add("show"), 10);
+        } else { fb.classList.remove("show"); setTimeout(() => fb.style.display = "none", 500); }
     });
+    function reveal() {
+        document.querySelectorAll(".memory-row").forEach(r => {
+            if (r.getBoundingClientRect().top < window.innerHeight - 70) r.classList.add("show");
+        });
+    }
+    window.addEventListener("scroll", reveal); window.addEventListener("load", reveal);
 
+    function zoomMedia(el, isVideo) {
+        const full = el.dataset.full;
+        const modal = document.getElementById('zoomModal');
+        const zi = document.getElementById('zoomImg');
+        const zv = document.getElementById('zoomVid');
+
+        if (isVideo) { zi.style.display = "none"; zv.style.display = "block"; zv.src = full; }
+        else { zv.style.display = "none"; zi.style.display = "block"; zi.src = full; }
+        modal.style.display = "flex";
+    }
+    function closeZoom() { document.getElementById('zoomModal').style.display = "none"; }
+
+    let lastTap = 0, zoomed = false;
+    document.getElementById("zoomModal").addEventListener("touchend", e => {
+        let now = new Date().getTime();
+        if (now - lastTap < 300) {
+            const media = document.querySelector(".zoomMedia:not([style*='display: none'])");
+            media.style.transition = "transform .25s";
+            media.style.transform = zoomed ? "scale(1)" : "scale(1.8)";
+            zoomed = !zoomed;
+        }
+        lastTap = now;
+    });
 </script>
-
 
 {% endblock %}

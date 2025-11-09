@@ -174,7 +174,8 @@ def upload():
         url = up["secure_url"]
 
         posts.insert_one({
-            "owner": session["user"],
+            "owner": session["user"].lower(),
+
             "url": url,
             "place": place,
             "date": date,
@@ -194,17 +195,17 @@ def feed():
         return redirect(url_for("login"))
 
     me = session["user"]
+    print("DEBUG CURRENT USER:", me)
+    print("DEBUG POSTS COUNT:", posts.count_documents({}))
+
     user = users.find_one({"email":me})
-    docs = list(posts.find().sort("time",1))
+    docs = list(posts.find().sort("time", 1))
+    
+    print("DEBUG DOC sample:", docs[0] if docs else "no docs")
 
     firstname = (user or {}).get("first_name", "Friend")
-
-    # pick random quote
     quote = random.choice(QUOTES)
-
-    # remove flag so popup shows only 1 time after login
     show_popup = session.pop("just_logged", None)
-
     return render_template("feed.html", docs=docs, firstname=firstname, quote=quote, show_popup=show_popup)
 
 

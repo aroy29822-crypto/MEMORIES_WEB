@@ -3,6 +3,8 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
     <title>MEMORIES</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -112,7 +114,7 @@
     </div>
 
     <nav class="mb-4">
-        {% if session.user %}
+        {% if "user" in session %}
         Logged in as <b>{{ session.user }}</b> |
         <a href="{{ url_for('feed') }}">Home</a>
         <a href="{{ url_for('upload') }}">Upload</a>
