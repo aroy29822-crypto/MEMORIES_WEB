@@ -9,9 +9,10 @@
         width: 100%;
         max-width: 1150px;
         margin: auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: start;
+
         gap: 35px;
         margin-bottom: 60px;
         flex-wrap: wrap;
@@ -163,7 +164,8 @@
     {% endif %}
 
     {% for p in docs %}
-    <div class="memory-row" style="{% if loop.index0%2==1 %}flex-direction:row-reverse;{% endif %}">
+    <div class="memory-row" style="{% if loop.index0%2==1 %}grid-template-columns:1fr auto;{% endif %}">
+
 
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
         <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
