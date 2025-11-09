@@ -1,46 +1,121 @@
-{% extends "base.html" %}
-{% block body %}
+<!DOCTYPE html>
+<html>
 
-<div class="container py-4 text-light">
-    <h2>Admin Panel</h2>
-    <hr>
-    <a class="ghost btn" href="/admin/users">All Users</a>
-    <a class="ghost btn" href="/admin/loginlogs">Login Logs</a>
+<head>
+    <title>Admin – MEMORIES</title>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            color: #fff;
+            min-height: 100vh;
+            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat fixed;
+        }
 
+        .wrap {
+            max-width: 1150px;
+            margin: auto;
+            padding: 25px;
+        }
 
-        {% for d in docs %}
-        <div class="col">
-            <div class="card bg-dark bg-opacity-50 text-light border rounded-3 shadow-sm">
+        h2 {
+            margin-bottom: 25px;
+        }
 
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+        }
 
-                {% set is_video = d.url.endswith('.mp4') or d.url.endswith('.webm') or d.url.endswith('.mov') %}
+        .card {
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 14px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
 
-                {% if is_video %}
-                <video class="card-img-top" src="{{ d.url }}" controls></video>
+        .media {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            display: block;
+        }
+
+        .content {
+            padding: 12px 14px;
+        }
+
+        .meta {
+            font-size: 12px;
+            opacity: .9;
+            margin-bottom: 6px;
+        }
+
+        .desc {
+            font-size: 13px;
+            white-space: pre-line;
+        }
+
+        .btn {
+            background: #ff3366;
+            color: white;
+            text-decoration: none;
+            padding: 6px 10px;
+            border-radius: 8px;
+            display: inline-block;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        @media(max-width:700px) {
+            .wrap {
+                padding: 14px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="wrap">
+        <h2>ADMIN PANEL</h2>
+
+        <a class="btn" href="/feed">Back to Feed</a>
+        <a class="btn" href="/admin/feedbacks" style="background:#4478ff">Feedbacks</a>
+        <a class="btn" href="/logout" style="background:#444">Logout</a>
+
+        <br><br>
+
+        <div class="grid">
+            {% for d in docs %}
+            <div class="card">
+                {% set video = d.url.endswith('.mp4') or d.url.endswith('.webm') or d.url.endswith('.mov') %}
+                {% if video %}
+                <video class="media" src="{{ d.url }}" controls playsinline></video>
                 {% else %}
-                <img class="card-img-top" src="{{ d.url }}">
+                <img class="media" src="{{ d.url }}" alt="">
                 {% endif %}
-
-                <div class="card-body">
-                    <div class="small opacity-75">{{ d.owner }} • {{ d.place }} • {{ d.date }}</div>
-                    <p style="white-space:pre-wrap">{{ d.desc }}</p>
+                <div class="content">
+                    <div class="meta">{{ d.owner }} • {{ d.place }} • {{ d.date }}</div>
+                    <div class="desc">{{ d.desc }}</div>
 
                     <a class="btn" href="{{ url_for('edit_post', id=d._id) }}">Edit</a>
 
-
                     <form action="{{ url_for('delete_post', id=d._id) }}" method="POST" style="display:inline-block"
-                        onsubmit="return confirm('Delete?')">
-                        <button class="btn btn-danger btn-sm">Delete</button>
+                        onsubmit="return confirm('Confirm Delete?');">
+                        <button class="btn" style="background:#222">Delete</button>
                     </form>
-
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
 
     </div>
-</div>
 
-{% endblock %}
+</body>
+
+</html>

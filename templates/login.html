@@ -2,37 +2,35 @@
 {% block body %}
 
 <style>
-    #login-msg {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 14px 22px;
-        border-radius: 12px;
-        font-size: 18px;
-        backdrop-filter: blur(6px);
-        opacity: 0;
-        transform: translateY(40px);
-        transition: all 0.6s ease;
+    #login-box {
+        width: 90%;
+        max-width: 360px;
+        background: rgba(0, 0, 0, .40);
+        padding: 28px;
+        border-radius: 14px;
+        backdrop-filter: blur(10px);
+        margin: 110px auto;
+        color: white;
     }
 
-    #login-msg.show {
-        opacity: 1;
-        transform: translateY(0);
+    @media(max-width:650px) {
+        #login-box {
+            margin-top: 80px;
+        }
     }
 </style>
 
-<div
-    style="max-width:380px;margin:120px auto;padding:28px;background:rgba(0,0,0,.35);border-radius:14px;backdrop-filter:blur(8px);">
-    <h2 class="text-light text-center mb-4">LOGIN</h2>
+<div id="login-box">
+    <h2 class="text-center mb-4">LOGIN</h2>
+
     <form method="POST">
         <input class="form-control mb-3" type="email" name="email" placeholder="Email" required>
         <input class="form-control mb-3" type="password" name="password" placeholder="Password" required>
         <button class="btn btn-primary w-100">Login</button>
     </form>
 
-    <div class="text-center text-light mt-3">
-        <a href="/register" style="color:#ffc;">Create Account</a>
+    <div class="text-center mt-3">
+        <a href="{{ url_for('register') }}" style="color:#ffc;">Create Account</a>
     </div>
 </div>
 
@@ -45,13 +43,12 @@
             box.classList.add("show");
             setTimeout(() => box.classList.remove("show"), 2500);
         }
-        <script>
-            const go_feed = {{ 'true' if go_feed else 'false' }};
-            if (go_feed) {
-                setTimeout(() => { window.location.href = "/feed"; }, 800);
-            }
-        </script>
+    });
 
+    const go_feed = {{ 'true' if go_feed else 'false' }};
+    if (go_feed) {
+        setTimeout(() => { window.location.href = "/feed"; }, 900);
+    }
 </script>
 
 {% endblock %}

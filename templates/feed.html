@@ -1,68 +1,142 @@
 {% extends "base.html" %}
 {% block body %}
 
-<!-- WELCOME NAME POPUP -->
-{% if show_popup %}
-<div id="welcome-box">
-    Hi {{ firstname }}!<br>
-    <small>{{ quote }}</small>
-</div>
-{% endif %}
-
 <style>
-    /* welcome popup */
+    .memory-row {
+        opacity: 0;
+        transform: translateY(60px);
+        transition: all .55s ease-out;
+    }
+
+    .memory-row.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .memory-row {
+        width: 100%;
+        max-width: 1150px;
+        /* NEW ADD */
+        margin: auto;
+        /* NEW ADD */
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 35px;
+        /* changed */
+        margin-bottom: 60px;
+        /* changed */
+    }
+
+    .memory-pic {
+        width: 250px;
+        height: 250px;
+        border-radius: 16px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 0 22px rgba(0, 0, 0, .45);
+    }
+
+    .memory-text {
+        color: white;
+        font-size: 21px;
+        line-height: 1.45;
+        flex: 1;
+        white-space: pre-line;
+    }
+
+    #feedback-box {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all .5s ease-out;
+        max-width: 270px;
+        margin: auto;
+        margin-top: 40px;
+    }
+
+    #feedback-box.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+
+    /* MOBILE */
+    @media(max-width:700px) {
+
+        .memory-row {
+            width: 100%;
+            gap: 18px;
+        }
+
+        .memory-pic {
+            width: 70% !important;
+            height: auto !important;
+        }
+
+        .memory-text {
+            font-size: 17px;
+            max-width: 90%;
+        }
+    }
+
+    /* WELCOME BOX POSITION + ANIMATION */
     #welcome-box {
         position: fixed;
-        bottom: 20px;
-        left: -350px;
-        background: rgba(0, 0, 0, 0.7);
+        bottom: 18px;
+        left: 18px;
+        max-width: 240px;
+        background: rgba(0, 0, 0, 0.68);
         color: white;
-        padding: 18px 25px;
-        border-radius: 12px;
+        padding: 18px 22px;
+        border-radius: 14px;
         font-size: 19px;
-        z-index: 999999;
+        z-index: 9999;
         animation: slideIn 0.6s forwards, slideOut 0.6s forwards 2.6s;
     }
 
     @keyframes slideIn {
         from {
-            left: -350px;
+            left: -250px;
             opacity: 0;
         }
 
         to {
-            left: 30px;
+            left: 18px;
             opacity: 1;
         }
     }
 
     @keyframes slideOut {
+        from {
+            left: 18px;
+            opacity: 1;
+        }
+
         to {
-            left: 400px;
+            left: 350px;
             opacity: 0;
         }
     }
 
-
-    .memory-text {
-        width: auto;
-        color: white;
-        font-size: 20px;
-        line-height: 1.4;
-    }
-
-
-    /* FEEDBACK BOX RIGHT BOTTOM */
-    #feedback-box {
-        position: fixed;
-        bottom: 35px;
-        right: 35px;
-        z-index: 9999;
+    @media(max-width:700px) {
+        #welcome-box {
+            font-size: 16px;
+            padding: 14px 18px;
+            bottom: 14px;
+            left: 14px;
+            max-width: 190px;
+        }
     }
 </style>
 
+<div class="container py-5" style="max-width:1250px;margin:auto;">
 
-<div class="container py-5">
+    {% if show_popup %}
+    <div id="welcome-box">
+        Hi {{ firstname }}!<br>
+        <small>{{ quote }}</small>
+    </div>
+    {% endif %}
 
     {% for p in docs %}
     <div class="memory-row" style="{% if loop.index0%2==1 %}flex-direction:row-reverse;{% endif %}">
@@ -74,7 +148,7 @@
         {% endif %}
 
         <div class="memory-text" style="{% if loop.index0%2==1 %}text-align:right;{% endif %}">
-            <b>{{ p.place }}</b> — {{ p.date }} <br><br>
+            <b>{{ p.place }}</b> — {{ p.date }}<br><br>
             {{ p.desc }}
         </div>
 
@@ -83,9 +157,8 @@
 
 </div>
 
-
-<!-- FEEDBACK BOX -->
-<div id="feedback-box">
+<!-- FEEDBACK -->
+<div id="feedback-box" style="display:none;margin-top:80px;">
     <form action="/feedback" method="POST">
         <textarea name="msg" placeholder="Feedback..."
             style="width:230px;height:70px;border-radius:8px;padding:8px;"></textarea>
@@ -95,24 +168,26 @@
 
 
 <script>
-    setTimeout(() => { let w = document.getElementById("welcome_msg"); if (w) w.style.display = "none"; }, 3500);
+    document.addEventListener("scroll", () => {
+        const fb = document.getElementById("feedback-box");
+        if (!fb) return;
 
-    const posts = document.querySelectorAll(".memory-row");
-    window.addEventListener("scroll", () => {
-        posts.forEach(p => {
-            const pos = p.getBoundingClientRect().top;
-            if (pos < window.innerHeight - 90) { p.classList.add("show"); }
-        });
+        const scrollPos = window.scrollY + window.innerHeight;
+        const pageHeight = document.body.scrollHeight;
+        const threshold = 200; // Distance from bottom to trigger
+
+        if (scrollPos >= pageHeight - threshold) {
+            // Show feedback box
+            fb.style.display = "block";
+            setTimeout(() => fb.classList.add("show"), 10);
+        } else {
+            // Hide feedback box
+            fb.classList.remove("show");
+            setTimeout(() => fb.style.display = "none", 500);
+        }
     });
+
 </script>
-{% if session.get('just_logged') %}
-<div id="welcome-box">
-    Hi {{ firstname }}!<br>
-    <small>“Every picture is a story we lived.”</small>
-</div>
-<script>
-    sessionStorage.setItem("removeWelcome", "1");
-</script>
-{% endif %}
+
 
 {% endblock %}

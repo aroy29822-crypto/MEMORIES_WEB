@@ -1,32 +1,96 @@
 {% extends "base.html" %}
 {% block body %}
 
+<style>
+    .p_row {
+        display: flex;
+        gap: 18px;
+        margin-bottom: 35px;
+        align-items: flex-start;
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all .45s ease-out;
+        max-width: 1050px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .p_row.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .p_pic {
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 0 16px rgba(0, 0, 0, .45);
+    }
+
+    .p_txt {
+        color: white;
+        font-size: 18px;
+        line-height: 1.4;
+        flex: 1;
+        white-space: pre-line;
+    }
+
+    @media(max-width:700px) {
+        .p_row {
+            flex-direction: row;
+            gap: 12px;
+        }
+
+        .p_pic {
+            width: 90px;
+            height: 90px;
+        }
+
+        .p_txt {
+            font-size: 16px;
+        }
+    }
+</style>
+
 <div class="container py-4">
 
-    <h2 class="text-light mb-4">My Memories</h2>
+    <h3 class="text-light mb-4" style="text-align:center;">My Memories</h3>
 
     {% for p in docs %}
-    <div class="row mb-5 align-items-start {% if loop.index is odd %} flex-row {% else %} flex-row-reverse {% endif %}">
+    <div class="p_row">
 
-        <div class="col-md-6 text-center">
-            {% if "mp4" in p.url or "webm" in p.url or "mkv" in p.url or "mov" in p.url %}
-            <video src="{{ p.url }}" controls class="img-fluid rounded shadow-lg" style="max-height:300px;"></video>
-            {% else %}
-            <img src="{{ p.url }}" class="img-fluid rounded shadow-lg" style="max-height:300px;object-fit:cover;">
-            {% endif %}
-        </div>
+        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
+        <video src="{{ p.url }}" controls class="p_pic"></video>
+        {% else %}
+        <img src="{{ p.url }}" class="p_pic">
+        {% endif %}
 
-        <div class="col-md-6 text-light" style="{% if loop.index is even %}text-align:right{% endif %}">
-            <h3>{{ p.place }}</h3>
-            <h6>{{ p.date }}</h6>
-            <p style="white-space:pre-line">{{ p.desc }}</p>
+        <div class="p_txt">
+            <b>{{ p.place }}</b> — {{ p.date }}<br><br>
+            {{ p.desc }}
 
-            <a href="{{ url_for('edit_post', id=p._id) }}" class="btn btn-warning btn-sm mt-2">Edit</a>
+            <div>
+                <a href="{{ url_for('edit_post', id=p._id) }}" class="btn btn-warning btn-sm mt-3">
+                    Edit
+                </a>
+            </div>
         </div>
 
     </div>
     {% endfor %}
 
 </div>
+
+<script>
+    const blocks = document.querySelectorAll(".p_row");
+    window.addEventListener("scroll", () => {
+        blocks.forEach(r => {
+            const pos = r.getBoundingClientRect().top;
+            if (pos < window.innerHeight - 50) r.classList.add("show");
+        })
+    });
+</script>
 
 {% endblock %}
