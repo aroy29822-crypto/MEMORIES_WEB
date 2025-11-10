@@ -14,21 +14,11 @@
         line-height: 1.45;
         color: white;
         white-space: pre-line;
-        display: flex;
-        flex-direction: column;
     }
 
     .memory-row.show {
         opacity: 1;
         transform: translateY(0) scale(1);
-    }
-
-    /* Top section: image + text beside it */
-    .memory-top {
-        display: flex;
-        gap: 25px;
-        align-items: flex-start;
-        margin-bottom: 15px;
     }
 
     .memory-row img,
@@ -39,17 +29,14 @@
         object-fit: cover;
         box-shadow: 0 0 22px rgba(0, 0, 0, .45);
         cursor: pointer;
-        flex-shrink: 0;
+        float: left;
+        margin: 0 25px 15px 0;
     }
 
-    .memory-beside {
-        flex: 1;
-        min-width: 0;
-    }
-
-    /* Full-width text below image */
-    .memory-below {
-        width: 100%;
+    .memory-row::after {
+        content: "";
+        display: block;
+        clear: both;
     }
 
     /* MOBILE */
@@ -58,24 +45,11 @@
             font-size: 17px;
         }
 
-        .memory-top {
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
         .memory-row img,
         .memory-row video {
-            width: 170px !important;
-            height: 170px !important;
-        }
-
-        .memory-beside {
-            text-align: center;
-        }
-
-        .memory-below {
-            text-align: center;
+            width: 120px;
+            height: 120px;
+            margin: 0 15px 10px 0;
         }
     }
 </style>
@@ -92,23 +66,15 @@
     {% for p in docs %}
 
     <div class="memory-row">
-        <div class="memory-top">
-            {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
-            <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
-                class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy"></video>
-            {% else %}
-            <img src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}"
-                class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
-            {% endif %}
+        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
+        <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
+            class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy"></video>
+        {% else %}
+        <img src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}"
+            class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
+        {% endif %}
 
-            <div class="memory-beside">
-                <b>{{ p.place }}</b> — {{ p.date }}
-            </div>
-        </div>
-
-        <div class="memory-below">
-            {{ p.desc }}
-        </div>
+        <b>{{ p.place }}</b> — {{ p.date }}<br><br>{{ p.desc }}
     </div>
 
     {% endfor %}
