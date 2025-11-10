@@ -94,9 +94,14 @@
     }
 
     @media(max-width:700px) {
+        .memory-row {
+            grid-template-columns: auto 1fr !important;
+            gap: 14px;
+        }
+
         .memory-pic {
-            width: 150px !important;
-            height: 150px !important;
+            width: 130px !important;
+            height: 130px !important;
         }
 
         .memory-text {
@@ -104,17 +109,8 @@
             line-height: 1.35;
             text-align: justify;
         }
-
-        .memory-row:nth-child(odd) {
-            grid-template-columns: 1fr auto;
-            text-align: right;
-        }
-
-        .memory-row:nth-child(even) {
-            grid-template-columns: auto 1fr;
-            text-align: left;
-        }
     }
+
 
     #zoomModal {
         position: fixed;
@@ -160,7 +156,8 @@
     {% endif %}
 
     {% for p in docs %}
-    <div class="memory-row" style="{% if loop.index0%2==1 %}grid-template-columns:1fr auto;text-align:right{% endif %}">
+    <div class="memory-row"
+        style="{% if loop.index0%2==1 %}grid-template-columns:1fr auto;{% else %}grid-template-columns:auto 1fr;{% endif %}">
 
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
         <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
@@ -170,11 +167,13 @@
             class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
         {% endif %}
 
-        <div class="memory-text">
+        <div class="memory-text" style="{% if loop.index0%2==1 %}text-align:right;{% endif %}">
             <b>{{ p.place }}</b> — {{ p.date }}<br><br>{{ p.desc }}
         </div>
+
     </div>
     {% endfor %}
+
 </div>
 
 <div id="feedback-box" style="display:none;margin-top:80px;">
