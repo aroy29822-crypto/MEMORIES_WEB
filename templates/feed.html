@@ -102,6 +102,7 @@
     }
 
     @media(max-width:700px) {
+
         .memory-pic {
             width: 150px !important;
             height: 150px !important;
@@ -113,7 +114,10 @@
             line-height: 1.35;
             text-align: justify;
         }
+
     }
+
+
 
 
 
@@ -162,13 +166,10 @@
 
     {% for p in docs %}
     <div class="memory-row"
-        style="{% if loop.index0%2==1 %}grid-template-columns:1fr auto;{% else %}grid-template-columns:auto 1fr;{% endif %}">
-
-
-
-        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
-        <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
-            class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy">
+        style="{% if loop.index0%2==1 %}grid-template-columns:1fr auto;{% else %}grid-template-columns:auto 1fr;{% endif %}"
+        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %} <video
+        src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
+        class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy">
         </video>
         {% else %}
         <img src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}"
