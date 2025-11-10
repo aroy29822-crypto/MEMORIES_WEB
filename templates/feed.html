@@ -14,6 +14,7 @@
         line-height: 1.45;
         color: white;
         white-space: pre-line;
+        text-align: left;
     }
 
     .memory-row.show {
@@ -43,13 +44,16 @@
     @media(max-width:700px) {
         .memory-row {
             font-size: 17px;
+            text-align: left !important;
+            padding: 0 10px;
         }
 
         .memory-row img,
         .memory-row video {
-            width: 120px;
-            height: 120px;
-            margin: 0 15px 10px 0;
+            width: 110px !important;
+            height: 110px !important;
+            margin: 0 12px 10px 0 !important;
+            float: left !important;
         }
     }
 </style>
