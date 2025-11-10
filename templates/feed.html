@@ -6,91 +6,136 @@
         opacity: 0;
         transform: translateY(40px) scale(.97);
         transition: all .5s;
+        width: 100%;
         max-width: 1150px;
-        margin: 80px auto;
-        color: white;
+        margin: auto;
+        margin-bottom: 80px;
         font-size: 21px;
         line-height: 1.45;
+        color: white;
         white-space: pre-line;
+        display: flex;
+        gap: 25px;
+        align-items: flex-start;
     }
 
-    /* reveal */
     .memory-row.show {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
 
-    /* default image float left */
     .memory-row img,
     .memory-row video {
         width: 250px;
         height: 250px;
-        object-fit: cover;
         border-radius: 16px;
+        object-fit: cover;
         box-shadow: 0 0 22px rgba(0, 0, 0, .45);
-        float: left;
-        margin: 0 25px 10px 0;
         cursor: pointer;
+        flex-shrink: 0;
     }
 
-    /* alternate (right side) */
-    .memory-row.right-img img,
-    .memory-row.right-img video {
-        float: right;
-        margin: 0 0 10px 25px;
+    .memory-text {
+        flex: 1;
+        min-width: 0;
     }
 
-    .memory-row::after {
-        content: "";
-        display: block;
-        clear: both;
-    }
-
-
-    /* mobile */
+    /* MOBILE */
     @media(max-width:700px) {
         .memory-row {
             font-size: 17px;
+            gap: 15px;
         }
 
         .memory-row img,
         .memory-row video {
-            float: none !important;
-            display: block;
-            margin: 0 auto 15px auto !important;
-            width: 170px !important;
-            height: 170px !important;
+            width: 120px;
+            height: 120px;
         }
     }
 </style>
 
+
 <div class="container py-5" style="max-width:1250px;margin:auto;">
+
+    {% if show_popup %}
+    <div id="welcome-box">
+        Hi {{ firstname }}!<br><small>{{ quote }}</small>
+    </div>
+    {% endif %}
 
     {% for p in docs %}
 
-    <div class="memory-row {% if loop.index0%2==1 %}right-img{% endif %}">
-
+    <div class="memory-row">
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
         <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
-            onclick="zoomMedia(this,true)" loading="lazy"></video>
+            class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy"></video>
         {% else %}
         <img src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}"
-            onclick="zoomMedia(this,false)" loading="lazy">
+            class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
         {% endif %}
 
-        {{ p.desc }}
-
+        <div class="memory-text">
+            <b>{{ p.place }}</b> — {{ p.date }}<br><br>{{ p.desc }}
+        </div>
     </div>
 
     {% endfor %}
 </div>
 
-<!-- feedback + zoom scripts remain same -->
+<!-- feedback + zoom scripts unchanged -->
+
+<div id="feedback-box" style="display:none;margin-top:80px;">
+    <form action="/feedback" method="POST">
+        <textarea name="msg" placeholder="Feedback..."
+            style="width:230px;height:70px;border-radius:8px;padding:8px;"></textarea>
+        <button class="btn btn-primary btn-sm mt-2 w-100">Send</button>
+    </form>
+</div>
+
+<div id="zoomModal" onclick="closeZoom()">
+    <img id="zoomImg" class="zoomMedia">
+    <video id="zoomVid" controls class="zoomMedia"></video>
+</div>
+
 <script>
-    document.addEventListener("scroll", () => { document.querySelectorAll(".memory-row").forEach(r => { if (r.getBoundingClientRect().top < window.innerHeight - 70) r.classList.add("show") }) });
-    window.addEventListener("load", () => { document.querySelectorAll(".memory-row").forEach(r => { if (r.getBoundingClientRect().top < window.innerHeight - 70) r.classList.add("show") }) });
-    function zoomMedia(el, isVideo) { const full = el.dataset.full; const modal = document.getElementById('zoomModal'); const zi = document.getElementById('zoomImg'); const zv = document.getElementById('zoomVid'); if (isVideo) { zi.style.display = "none"; zv.style.display = "block"; zv.src = full; } else { zv.style.display = "none"; zi.style.display = "block"; zi.src = full; } modal.style.display = "flex"; }
+    document.addEventListener("scroll", () => {
+        const fb = document.getElementById("feedback-box");
+        const scrollPos = window.scrollY + window.innerHeight;
+        if (scrollPos >= document.body.scrollHeight - 200) {
+            fb.style.display = "block"; setTimeout(() => fb.classList.add("show"), 10);
+        } else { fb.classList.remove("show"); setTimeout(() => fb.style.display = "none", 500); }
+    });
+    function reveal() {
+        document.querySelectorAll(".memory-row").forEach(r => {
+            if (r.getBoundingClientRect().top < window.innerHeight - 70) r.classList.add("show");
+        });
+    }
+    window.addEventListener("scroll", reveal); window.addEventListener("load", reveal);
+
+    function zoomMedia(el, isVideo) {
+        const full = el.dataset.full;
+        const modal = document.getElementById('zoomModal');
+        const zi = document.getElementById('zoomImg');
+        const zv = document.getElementById('zoomVid');
+
+        if (isVideo) { zi.style.display = "none"; zv.style.display = "block"; zv.src = full; }
+        else { zv.style.display = "none"; zi.style.display = "block"; zi.src = full; }
+        modal.style.display = "flex";
+    }
     function closeZoom() { document.getElementById('zoomModal').style.display = "none"; }
+
+    let lastTap = 0, zoomed = false;
+    document.getElementById("zoomModal").addEventListener("touchend", e => {
+        let now = new Date().getTime();
+        if (now - lastTap < 300) {
+            const media = document.querySelector(".zoomMedia:not([style*='display: none'])");
+            media.style.transition = "transform .25s";
+            media.style.transform = zoomed ? "scale(1)" : "scale(1.8)";
+            zoomed = !zoomed;
+        }
+        lastTap = now;
+    });
 </script>
 
 {% endblock %}

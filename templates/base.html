@@ -1,73 +1,173 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
+
 
 <head>
-    <meta charset="UTF-8">
-    <title>MEMORIES</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+       
+    <meta charset="utf-8">
+       
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+
+        <title>MEMORIES</title>
+
+
+       
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+       
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <style>
+
+        <style>
+        body {
+            opacity: 0;
+            transition: opacity .55s ease-in;
+        }
+
+
+        body.page-loaded {
+            opacity: 1;
+        }
+
+
         body {
             margin: 0;
             padding: 0;
-            background: url("/static/bg-blur.jpg") center/cover fixed no-repeat;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: white;
-            font-family: system-ui, sans-serif;
+            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat;
+            background-attachment: fixed;
+            color: #fff;
         }
 
-        nav {
-            width: 100%;
-            background: rgba(0, 0, 0, .35);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 14px 20px;
-            font-size: 16px;
-            display: flex;
-            gap: 25px;
-            align-items: center;
-        }
 
         nav a {
             color: white;
+            font-weight: 600;
+            margin-right: 15px;
             text-decoration: none;
         }
 
-        nav .email {
-            color: #e0e0e0;
+
+        nav a:hover {
+            text-decoration: underline;
         }
 
-        .btn-nav {
-            border: 1px solid white;
-            padding: 5px 12px;
-            border-radius: 6px;
+
+        #loader {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: black;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity .4s;
         }
 
-        @media (max-width:700px) {
-            nav {
-                font-size: 14px;
-                gap: 10px;
-                flex-wrap: wrap;
+
+        .loader-circle {
+            width: 50px;
+            height: 50px;
+            border: 6px solid rgba(255, 255, 255, .4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
             }
         }
+
+
+        #login-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, .6);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            opacity: 0;
+            transition: .4s;
+        }
+
+
+        #login-msg.show {
+            opacity: 1;
+        }
     </style>
+
+
 </head>
 
-<body>
 
-    <nav>
-        <span class="email">Logged in as {{ email }}</span> |
-        <a href="/feed">Home</a>
-        <a href="/upload">Upload</a>
-        <a href="/profile" class="btn-nav">Profile</a>
-        <a href="/logout">Logout</a>
-    </nav>
+<script>
+    window.addEventListener("load", () => {
+        // Hide loader
+        document.getElementById("loader").style.opacity = "0";
+        setTimeout(() => document.getElementById("loader").style.display = "none", 400);
 
-    {% block body %}{% endblock %}
 
+        // Add loaded class to body
+        document.body.classList.add("page-loaded");
+    });
+
+
+</script>
+
+
+
+<body class="p-4 text-light">
+
+
+        <!-- blur overlay -->
+        <div style="position:fixed;inset:0;
+    background:linear-gradient(to bottom right, rgba(0,0,0,0.25), rgba(0,0,0,0.55));
+    backdrop-filter:blur(7px);
+    z-index:-1;"></div>
+
+
+        <div id="loader">
+                <div class="loader-circle"></div>
+            </div>
+
+
+        <nav class="mb-4">
+                {% if "user" in session %}
+                Logged in as <b>{{ session.user }}</b> |
+                <a href="{{ url_for('feed') }}">Home</a>
+                <a href="{{ url_for('upload') }}">Upload</a>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light ms-2">Profile</a>
+
+
+                {% if session.user == ADMIN_EMAIL %}
+                | <a href="{{url_for('admin_feedback')}}">Feedbacks</a>
+                <a href="/admin" class="btn btn-outline-warning mx-3">Admin</a>
+                {% endif %}
+
+
+                <a href="{{ url_for('logout') }}">Logout</a>
+                {% endif %}
+            </nav>
+
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info">
+                {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+
+        {% block body %}{% endblock %}
 </body>
+
 
 </html>
