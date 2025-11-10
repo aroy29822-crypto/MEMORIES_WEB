@@ -4,11 +4,11 @@
 <style>
     .memory-block {
         width: 100%;
-        max-width: 1150px;
+        max-width: 1250px;
         margin: 0 auto 90px auto;
         color: rgb(255, 255, 255);
         font-size: 17px;
-        line-height: 1.45;
+        line-height: 1.35;
         white-space: pre-line;
         opacity: 0;
         transform: translateY(40px) scale(.97);
@@ -24,10 +24,22 @@
         width: 130px;
         height: 130px;
         object-fit: cover;
-        border-radius: 9px;
+        border-radius: 10px;
         box-shadow: 0 0 22px rgba(0, 0, 0, .45);
         cursor: pointer;
-        margin-bottom: 10px;
+    }
+
+    .memory-text {
+        display: block;
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    @media(max-width:700px) {
+        .picture {
+            width: 110px;
+            height: 110px;
+        }
     }
 </style>
 
@@ -42,22 +54,21 @@
 
     {% for p in docs %}
 
-    <div class="memory-block" style="{% if loop.index0%2==0 %}float:left{% else %}float:right{% endif %};clear:both;">
+    <div class="memory-block" style="clear:both;{% if loop.index0%2==0 %}float:left;{% else %}float:right;{% endif %}">
+
 
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
         <video class="picture"
-            style="{% if loop.index0%2==0 %}float:left;margin-right:20px{% else %}float:right;margin-left:20px{% endif %}"
+            style="{% if loop.index0%2==0 %}float:left;margin-right:65px{% else %}float:right;margin-left:65px{% endif %}"
             data-full="{{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" controls
             onclick="zoomMedia(this,true)" loading="lazy"></video>
         {% else %}
         <img class="picture"
-            style="{% if loop.index0%2==0 %}float:left;margin-right:20px{% else %}float:right;margin-left:20px{% endif %}"
-            data-full="{{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}"
+            style="{% if loop.index0%2==0 %}float:left;margin-right:45px{% else %}float:right;margin-left:45px{% endif %}" " data-full="
+            {{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}"
             onclick="zoomMedia(this,false)" loading="lazy">
         {% endif %}
-
-        {{ p.desc }}
-
+        <div class="memory-text">{{ p.desc }}</div>
         <div style="clear:both"></div>
     </div>
 
