@@ -2,35 +2,20 @@
 {% block body %}
 
 <style>
-    .container {
-        max-width: 1250px;
-        margin: auto;
-        /* Multi-column newspaper style layout with adaptive columns */
-        column-width: 250px;
-        /* Target width for each column */
-        column-gap: 20px;
-        /* Gap between columns */
-        column-fill: balance;
-        /* Distribute content evenly across columns */
-    }
-
     .memory-row {
         opacity: 0;
         transform: translateY(40px) scale(.97);
         transition: all .5s;
-        break-inside: avoid;
-        /* Prevent breaking individual rows across columns */
-        margin-bottom: 1.5em;
-        display: block;
-        /* Rows become block level in columns */
         width: 100%;
-        /* Full width inside each column */
-        box-sizing: border-box;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 12px;
+        max-width: 1150px;
+        margin: auto;
+        margin-bottom: 80px;
+        font-size: 21px;
+        line-height: 1.45;
         color: white;
-        box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+        white-space: pre-line;
+        display: flex;
+        flex-direction: column;
     }
 
     .memory-row.show {
@@ -38,152 +23,65 @@
         transform: translateY(0) scale(1);
     }
 
-    .memory-pic {
-        width: 100%;
-        height: auto;
-        max-height: 250px;
+    /* Top section: image + text beside it */
+    .memory-top {
+        display: flex;
+        gap: 25px;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .memory-row img,
+    .memory-row video {
+        width: 250px;
+        height: 250px;
         border-radius: 16px;
         object-fit: cover;
         box-shadow: 0 0 22px rgba(0, 0, 0, .45);
         cursor: pointer;
-        margin-bottom: 10px;
+        flex-shrink: 0;
     }
 
-    .memory-text {
-        font-size: 18px;
-        line-height: 1.4;
-        white-space: pre-line;
-        text-align: justify;
+    .memory-beside {
+        flex: 1;
+        min-width: 0;
     }
 
-    #feedback-box {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: all .5s;
-        max-width: 270px;
-        margin: auto;
-        margin-top: 40px;
-        text-align: center;
-        color: white;
+    /* Full-width text below image */
+    .memory-below {
+        width: 100%;
     }
 
-    #feedback-box.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    #welcome-box {
-        position: fixed;
-        bottom: 18px;
-        left: 18px;
-        max-width: 240px;
-        background: rgba(0, 0, 0, .68);
-        color: white;
-        padding: 18px 22px;
-        border-radius: 14px;
-        font-size: 19px;
-        z-index: 9999;
-        animation: slideIn .6s forwards, slideOut .6s forwards 2.6s;
-    }
-
-    @keyframes slideIn {
-        from {
-            left: -250px;
-            opacity: 0;
+    /* MOBILE */
+    @media(max-width:700px) {
+        .memory-row {
+            font-size: 17px;
         }
 
-        to {
-            left: 18px;
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideOut {
-        from {
-            left: 18px;
-            opacity: 1;
+        .memory-top {
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
         }
 
-        to {
-            left: 350px;
-            opacity: 0;
-        }
-    }
-
-    /* Adjust columns number based on screen width */
-    @media (max-width: 1150px) {
-        .container {
-            column-width: 220px;
-            column-gap: 15px;
-        }
-    }
-
-    @media (max-width: 900px) {
-        .container {
-            column-width: 180px;
-            column-gap: 15px;
+        .memory-row img,
+        .memory-row video {
+            width: 170px !important;
+            height: 170px !important;
         }
 
-        .memory-pic {
-            max-height: 180px;
+        .memory-beside {
+            text-align: center;
         }
 
-        .memory-text {
-            font-size: 16px;
+        .memory-below {
+            text-align: center;
         }
-    }
-
-    @media (max-width: 600px) {
-        .container {
-            column-width: 140px;
-            column-gap: 10px;
-        }
-
-        .memory-pic {
-            max-height: 140px;
-        }
-
-        .memory-text {
-            font-size: 14px;
-        }
-    }
-
-    #zoomModal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, .85);
-        backdrop-filter: blur(8px);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999999;
-        animation: fadeInScale .4s ease-out;
-    }
-
-    @keyframes fadeInScale {
-        from {
-            opacity: 0;
-            transform: scale(.8);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    #zoomModal img,
-    #zoomModal video {
-        max-width: 92vw;
-        max-height: 92vh;
-        border-radius: 14px;
-        box-shadow: 0 0 25px rgba(0, 0, 0, .6);
-        object-fit: contain;
-        touch-action: pinch-zoom;
     }
 </style>
 
-<div class="container py-5">
+
+<div class="container py-5" style="max-width:1250px;margin:auto;">
 
     {% if show_popup %}
     <div id="welcome-box">
@@ -192,21 +90,31 @@
     {% endif %}
 
     {% for p in docs %}
+
     <div class="memory-row">
-        {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
-        <video src="{{ p.url|replace('/upload/','/upload/w_350,h_250,c_fill/') }}" data-full="{{ p.url }}" controls
-            class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy"></video>
-        {% else %}
-        <img src="{{ p.url|replace('/upload/','/upload/w_350,h_250,c_fill/') }}" data-full="{{ p.url }}"
-            class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
-        {% endif %}
-        <div class="memory-text">
-            <b>{{ p.place }}</b> — {{ p.date }}<br><br>{{ p.desc }}
+        <div class="memory-top">
+            {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
+            <video src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}" controls
+                class="memory-pic" onclick="zoomMedia(this,true)" loading="lazy"></video>
+            {% else %}
+            <img src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" data-full="{{ p.url }}"
+                class="memory-pic" onclick="zoomMedia(this,false)" loading="lazy">
+            {% endif %}
+
+            <div class="memory-beside">
+                <b>{{ p.place }}</b> — {{ p.date }}
+            </div>
+        </div>
+
+        <div class="memory-below">
+            {{ p.desc }}
         </div>
     </div>
-    {% endfor %}
 
+    {% endfor %}
 </div>
+
+<!-- feedback + zoom scripts unchanged -->
 
 <div id="feedback-box" style="display:none;margin-top:80px;">
     <form action="/feedback" method="POST">
@@ -226,21 +134,15 @@
         const fb = document.getElementById("feedback-box");
         const scrollPos = window.scrollY + window.innerHeight;
         if (scrollPos >= document.body.scrollHeight - 200) {
-            fb.style.display = "block";
-            setTimeout(() => fb.classList.add("show"), 10);
-        } else {
-            fb.classList.remove("show");
-            setTimeout(() => fb.style.display = "none", 500);
-        }
+            fb.style.display = "block"; setTimeout(() => fb.classList.add("show"), 10);
+        } else { fb.classList.remove("show"); setTimeout(() => fb.style.display = "none", 500); }
     });
-
     function reveal() {
         document.querySelectorAll(".memory-row").forEach(r => {
             if (r.getBoundingClientRect().top < window.innerHeight - 70) r.classList.add("show");
         });
     }
-    window.addEventListener("scroll", reveal);
-    window.addEventListener("load", reveal);
+    window.addEventListener("scroll", reveal); window.addEventListener("load", reveal);
 
     function zoomMedia(el, isVideo) {
         const full = el.dataset.full;
@@ -248,24 +150,13 @@
         const zi = document.getElementById('zoomImg');
         const zv = document.getElementById('zoomVid');
 
-        if (isVideo) {
-            zi.style.display = "none";
-            zv.style.display = "block";
-            zv.src = full;
-        } else {
-            zv.style.display = "none";
-            zi.style.display = "block";
-            zi.src = full;
-        }
+        if (isVideo) { zi.style.display = "none"; zv.style.display = "block"; zv.src = full; }
+        else { zv.style.display = "none"; zi.style.display = "block"; zi.src = full; }
         modal.style.display = "flex";
     }
+    function closeZoom() { document.getElementById('zoomModal').style.display = "none"; }
 
-    function closeZoom() {
-        document.getElementById('zoomModal').style.display = "none";
-    }
-
-    let lastTap = 0,
-        zoomed = false;
+    let lastTap = 0, zoomed = false;
     document.getElementById("zoomModal").addEventListener("touchend", e => {
         let now = new Date().getTime();
         if (now - lastTap < 300) {
@@ -278,4 +169,4 @@
     });
 </script>
 
-{% endblock %}
+{% endblock %}
