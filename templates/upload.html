@@ -1,71 +1,159 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
+{% block body %}
 
-<head>
-    <title>Upload Memory</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat;
-            backdrop-filter: blur(4px);
+<style>
+    .upload-container {
+        max-width: 600px;
+        margin: 60px auto;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        border-radius: 18px;
+        padding: 40px 35px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+        color: white;
+        transform: translateX(-50px);
+        opacity: 0;
+        animation: slideInForm 0.9s ease forwards;
+    }
+
+    @keyframes slideInForm {
+        from {
+            opacity: 0;
+            transform: translateX(-60px);
         }
 
-        .box {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(3px);
-            padding: 40px;
-            border-radius: 12px;
-            width: 360px;
-            color: white;
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .upload-container h2 {
+        text-align: center;
+        font-size: 26px;
+        margin-bottom: 25px;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #ffeecf;
+        animation: fadeDown 0.7s ease forwards;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
         }
 
-        input,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 6px;
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        padding: 10px 14px;
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #ffd27f;
+        box-shadow: 0 0 10px rgba(255, 210, 127, 0.3);
+        color: white;
+    }
+
+    input::file-selector-button {
+        background: #ffd27f;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 14px;
+        margin-right: 10px;
+        color: black;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    input::file-selector-button:hover {
+        background: #ffcc66;
+    }
+
+    .btn-upload {
+        width: 100%;
+        background: linear-gradient(45deg, #ffd27f, #ffae42);
+        border: none;
+        color: black;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 18px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-upload:hover {
+        background: linear-gradient(45deg, #ffdb99, #ffc966);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(255, 210, 127, 0.3);
+    }
+
+    .back-btn {
+        display: block;
+        margin: 30px auto 0 auto;
+        text-align: center;
+        color: #ffd27f;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+    .back-btn:hover {
+        color: #fff3cf;
+        text-decoration: underline;
+    }
+
+    @media(max-width:600px) {
+        .upload-container {
+            width: 90%;
+            padding: 30px 20px;
         }
 
-        button {
-            width: 100%;
-            background: #ff3366;
-            border: none;
-            padding: 12px;
-            margin-top: 10px;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
+        .upload-container h2 {
+            font-size: 22px;
         }
+    }
+</style>
 
-        a {
-            color: white;
-        }
-    </style>
-</head>
 
-<body>
-    <div class="box">
-        <h2>Upload Memory</h2>
+<div class="upload-container">
+    <h2>Upload Your Memory</h2>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="file" class="form-label">Select File (image/video)</label>
+            <input type="file" name="file" id="file" class="form-control" required>
+        </div>
 
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" required>
-            <input type="text" name="place" placeholder="Place" required>
-            <input type="date" name="date" required>
-            <textarea name="desc" placeholder="Describe the moment" required></textarea>
-            <button type="submit">Upload</button>
-        </form>
+        <div class="mb-3">
+            <label for="place" class="form-label">Place</label>
+            <input type="text" name="place" id="place" class="form-control" placeholder="Where was this?" required>
+        </div>
 
-        <br>
-        <a href="/feed">Back to feed</a>
-    </div>
-</body>
+        <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="text" name="date" id="date" class="form-control" placeholder="e.g. June 2023">
+        </div>
 
-</html>
+        <div class="mb-3">
+            <label for="desc" class="form-label">Description</label>
+            <textarea name="desc" id="desc" class="form-control" rows="3"
+                placeholder="Write something about this memory..." required></textarea>
+        </div>
+
+        <button class="btn-upload">Upload Memory</button>
+    </form>
+
+    <a href="{{ url_for('feed') }}" class="back-btn">← Back to Feed</a>
+</div>
+
+{% endblock %}

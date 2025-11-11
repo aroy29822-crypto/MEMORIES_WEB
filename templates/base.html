@@ -1,57 +1,70 @@
 <!doctype html>
-<html>
-
+<html lang="en">
 
 <head>
-       
     <meta charset="utf-8">
-       
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEMORIES</title>
 
-
-        <title>MEMORIES</title>
-
-
-       
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-       
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-
-        <style>
+    <style>
         body {
             opacity: 0;
-            transition: opacity .55s ease-in;
-        }
-
-
-        body.page-loaded {
-            opacity: 1;
-        }
-
-
-        body {
+            transform: translateX(80px);
+            transition: all 0.55s ease-in-out;
             margin: 0;
             padding: 0;
             background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat;
             background-attachment: fixed;
-            color: #fff;
+            color: white;
         }
 
+        body.page-loaded {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ===== NAVBAR ===== */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
 
         nav a {
-            color: white;
+            color: white !important;
             font-weight: 600;
-            margin-right: 15px;
             text-decoration: none;
+            transition: 0.25s;
         }
 
-
         nav a:hover {
+            color: #ffcc66 !important;
             text-decoration: underline;
         }
 
+        /* ===== BLUR OVERLAY ===== */
+        .blur-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom right,
+                    rgba(0, 0, 0, 0.35),
+                    rgba(0, 0, 0, 0.6));
+            backdrop-filter: blur(7px);
+            z-index: -1;
+            /* 👈 this is the key fix */
+            opacity: 1;
+            transition: opacity 0.9s ease;
+        }
 
+
+        /* ===== LOADER ===== */
         #loader {
             position: fixed;
             width: 100%;
@@ -63,19 +76,17 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity .4s;
+            transition: opacity 0.4s;
         }
 
-
         .loader-circle {
-            width: 50px;
-            height: 50px;
-            border: 6px solid rgba(255, 255, 255, .4);
+            width: 55px;
+            height: 55px;
+            border: 6px solid rgba(255, 255, 255, 0.4);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
 
         @keyframes spin {
             100% {
@@ -83,91 +94,119 @@
             }
         }
 
-
-        #login-msg {
+        /* ===== ZOOM MODAL ===== */
+        #zoomModal {
             position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, .6);
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 18px;
-            opacity: 0;
-            transition: .4s;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
         }
 
+        .zoomMedia {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+        }
 
-        #login-msg.show {
-            opacity: 1;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
-
-
 </head>
 
-
-<script>
-    window.addEventListener("load", () => {
-        // Hide loader
-        document.getElementById("loader").style.opacity = "0";
-        setTimeout(() => document.getElementById("loader").style.display = "none", 400);
-
-
-        // Add loaded class to body
-        document.body.classList.add("page-loaded");
-    });
-
-
-</script>
-
-
-
 <body class="p-4 text-light">
+    <!-- Loader -->
+    <div id="loader">
+        <div class="loader-circle"></div>
+    </div>
 
+    <!-- Blur Overlay -->
+    <div class="blur-overlay"></div>
 
-        <!-- blur overlay -->
-        <div style="position:fixed;inset:0;
-    background:linear-gradient(to bottom right, rgba(0,0,0,0.25), rgba(0,0,0,0.55));
-    backdrop-filter:blur(7px);
-    z-index:-1;"></div>
+    <!-- Navbar -->
+    <nav>
+        {% if "user" in session %}
+        Logged in as <b>{{ session.user }}</b> |
+        <a href="{{ url_for('feed') }}">Home</a>
+        <a href="{{ url_for('upload') }}">Upload</a>
+        <a href="{{ url_for('profile') }}" class="btn btn-outline-light btn-sm">Profile</a>
 
+        {% if session.user == ADMIN_EMAIL %}
+        | <a href="{{ url_for('admin_feedback') }}">Feedbacks</a>
+        <a href="{{ url_for('admin') }}" class="btn btn-outline-warning btn-sm">Admin</a>
+        <a href="{{ url_for('admin_users') }}">Users</a>
+        <a href="{{ url_for('admin_overview') }}">Overview</a>
+        {% endif %}
 
-        <div id="loader">
-                <div class="loader-circle"></div>
-            </div>
+        <a href="{{ url_for('logout') }}">Logout</a>
+        {% endif %}
+    </nav>
 
+    <!-- Zoom Modal -->
+    <div id="zoomModal" onclick="closeZoom()">
+        <img id="zoomImg" class="zoomMedia">
+        <video id="zoomVid" controls class="zoomMedia"></video>
+    </div>
 
-        <nav class="mb-4">
-                {% if "user" in session %}
-                Logged in as <b>{{ session.user }}</b> |
-                <a href="{{ url_for('feed') }}">Home</a>
-                <a href="{{ url_for('upload') }}">Upload</a>
-                <a href="{{ url_for('profile') }}" class="btn btn-outline-light ms-2">Profile</a>
+    {% block body %}{% endblock %}
 
+    <script>
+        // ===== PAGE LOADER =====
+        window.addEventListener("load", () => {
+            const loader = document.getElementById("loader");
+            loader.style.opacity = "0";
+            setTimeout(() => loader.style.display = "none", 400);
+            document.body.classList.add("page-loaded");
+        });
 
-                {% if session.user == ADMIN_EMAIL %}
-                | <a href="{{url_for('admin_feedback')}}">Feedbacks</a>
-                <a href="/admin" class="btn btn-outline-warning mx-3">Admin</a>
-                {% endif %}
+        // ===== PAGE TRANSITION =====
+        document.querySelectorAll("a").forEach(link => {
+            const url = link.getAttribute("href");
+            if (!url || url.startsWith("#") || url.includes("javascript")) return;
+            link.addEventListener("click", e => {
+                if (link.classList.contains("btn")) return;
+                e.preventDefault();
+                document.body.style.transition = "transform 0.5s ease, opacity 0.5s ease";
+                document.body.style.transform = "translateX(-80px)";
+                document.body.style.opacity = "0";
+                setTimeout(() => window.location.href = url, 350);
+            });
+        });
 
+        // ===== ZOOM MEDIA =====
+        function zoomMedia(el, isVideo) {
+            const modal = document.getElementById("zoomModal");
+            const img = document.getElementById("zoomImg");
+            const vid = document.getElementById("zoomVid");
+            if (isVideo) {
+                img.style.display = "none";
+                vid.style.display = "block";
+                vid.src = el.dataset.full;
+            } else {
+                vid.style.display = "none";
+                img.style.display = "block";
+                img.src = el.dataset.full;
+            }
+            modal.style.display = "flex";
+        }
 
-                <a href="{{ url_for('logout') }}">Logout</a>
-                {% endif %}
-            </nav>
-
-
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="alert alert-info">
-                {% for m in messages %}<div>{{ m }}</div>{% endfor %}
-            </div>
-        {% endif %}
-        {% endwith %}
-
-
-        {% block body %}{% endblock %}
+        function closeZoom() {
+            const modal = document.getElementById("zoomModal");
+            modal.style.display = "none";
+            document.getElementById("zoomVid").pause();
+        }
+    </script>
 </body>
-
 
 </html>

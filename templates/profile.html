@@ -2,94 +2,178 @@
 {% block body %}
 
 <style>
-    .p_row {
-        display: flex;
-        gap: 18px;
-        margin-bottom: 35px;
-        align-items: flex-start;
+    /* ===== PROFILE PAGE ANIMATION ===== */
+    .profile-container {
+        max-width: 1200px;
+        margin: 50px auto 80px auto;
         opacity: 0;
         transform: translateY(40px);
-        transition: all .45s ease-out;
-        max-width: 1050px;
-        margin-left: auto;
-        margin-right: auto;
+        transition: all 0.9s ease;
     }
 
-    .p_row.show {
+    .profile-container.show {
         opacity: 1;
         transform: translateY(0);
     }
 
-    .p_pic {
-        width: 120px;
-        height: 120px;
-        border-radius: 12px;
+    .profile-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .profile-header h2 {
+        font-size: 30px;
+        font-weight: 600;
+        color: #ffe9b8;
+        animation: slideInDown 0.8s ease forwards;
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ===== POST CARDS ===== */
+    .post-card {
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 14px;
+        margin-bottom: 40px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .post-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+    }
+
+    .post-media {
+        width: 220px;
+        height: 220px;
         object-fit: cover;
-        flex-shrink: 0;
-        box-shadow: 0 0 16px rgba(0, 0, 0, .45);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+        transition: transform 0.5s ease;
+        cursor: pointer;
     }
 
-    .p_txt {
-        color: white;
-        font-size: 18px;
-        line-height: 1.4;
-        flex: 1;
+    .post-media:hover {
+        transform: scale(1.05);
+    }
+
+    .post-desc {
+        color: #fff;
+        font-size: 17px;
+        line-height: 1.5;
         white-space: pre-line;
+        animation: fadeText 0.9s ease forwards;
     }
 
-    @media(max-width:700px) {
-        .p_row {
-            flex-direction: row;
-            gap: 12px;
+    @keyframes fadeText {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
         }
 
-        .p_pic {
-            width: 90px;
-            height: 90px;
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* ===== SMALL DETAILS ===== */
+    .post-meta {
+        font-size: 15px;
+        opacity: 0.8;
+        margin-top: 8px;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    /* ===== MOBILE ===== */
+    @media(max-width: 700px) {
+        .post-card {
+            text-align: center;
         }
 
-        .p_txt {
-            font-size: 16px;
+        .post-media {
+            width: 160px;
+            height: 160px;
+        }
+
+        .profile-header h2 {
+            font-size: 24px;
+        }
+
+        .post-desc {
+            font-size: 15px;
         }
     }
 </style>
 
-<div class="container py-4">
+<div class="profile-container" id="profileContainer">
+    <div class="profile-header">
+        <h2>Your Memories</h2>
+        <p style="opacity:0.8;">All your uploaded photos & videos 🌸</p>
+    </div>
 
-    <h3 class="text-light mb-4" style="text-align:center;">My Memories</h3>
+    {% if docs|length == 0 %}
+    <div class="text-center mt-5">
+        <p style="font-size:18px;">No memories yet — upload your first photo or video! 📸</p>
+        <a href="{{ url_for('upload') }}" class="btn btn-warning mt-3">Upload Now</a>
+    </div>
+    {% endif %}
 
     {% for p in docs %}
-    <div class="p_row">
-
+    <div class="post-card">
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
-        <video src="{{ p.url }}" controls class="p_pic"></video>
+        <video class="post-media" controls data-full="{{ p.url }}" onclick="zoomMedia(this,true)" loading="lazy">
+            <source src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" type="video/mp4">
+        </video>
         {% else %}
-        <img src="{{ p.url }}" class="p_pic">
+        <img class="post-media" data-full="{{ p.url }}"
+            src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" onclick="zoomMedia(this,false)"
+            loading="lazy">
         {% endif %}
 
-        <div class="p_txt">
-            <b>{{ p.place }}</b> — {{ p.date }}<br><br>
-            {{ p.desc }}
+        <div class="post-desc">{{ p.desc }}</div>
 
-            <div>
-                <a href="{{ url_for('edit_post', id=p._id) }}" class="btn btn-warning btn-sm mt-3">
-                    Edit
-                </a>
-            </div>
+        {% if p.place or p.date %}
+        <div class="post-meta">
+            {% if p.place %}📍 {{ p.place }}{% endif %}
+            {% if p.date %} • 📅 {{ p.date }}{% endif %}
         </div>
+        {% endif %}
 
+        {% if session.user == ADMIN_EMAIL or p.owner == session.user %}
+        <div class="mt-3">
+            <a href="{{ url_for('edit_post', id=p._id) }}" class="btn btn-sm btn-outline-light btn-edit">Edit</a>
+        </div>
+        {% endif %}
     </div>
     {% endfor %}
-
 </div>
 
 <script>
-    const blocks = document.querySelectorAll(".p_row");
-    window.addEventListener("scroll", () => {
-        blocks.forEach(r => {
-            const pos = r.getBoundingClientRect().top;
-            if (pos < window.innerHeight - 50) r.classList.add("show");
-        })
+    // smooth entrance for profile page
+    window.addEventListener("load", () => {
+        setTimeout(() => {
+            document.getElementById("profileContainer").classList.add("show");
+        }, 250);
     });
 </script>
 

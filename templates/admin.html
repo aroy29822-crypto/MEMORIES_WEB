@@ -1,121 +1,134 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
+{% block body %}
 
-<head>
-    <title>Admin – MEMORIES</title>
+<style>
+    .admin-panel {
+        max-width: 1100px;
+        margin: 60px auto;
+        color: white;
+        animation: slideInFromLeft 0.9s ease forwards;
+        transform: translateX(-50px);
+        opacity: 0;
+    }
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial;
-            color: #fff;
-            min-height: 100vh;
-            background: url("https://res.cloudinary.com/duwa63yb4/image/upload/v1762522834/expand_this_image_in_yexl3g.png") center/cover no-repeat fixed;
+    @keyframes slideInFromLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-70px);
         }
 
-        .wrap {
-            max-width: 1150px;
-            margin: auto;
-            padding: 25px;
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .admin-header {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 40px;
+        color: #ffeecf;
+        animation: fadeDown 0.7s ease forwards;
+    }
+
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
         }
 
-        h2 {
-            margin-bottom: 25px;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 18px;
-        }
+    .admin-card {
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
+        transition: 0.3s;
+    }
 
-        .card {
-            background: rgba(255, 255, 255, .15);
-            border: 1px solid rgba(255, 255, 255, .18);
-            border-radius: 14px;
-            overflow: hidden;
-            backdrop-filter: blur(12px);
-        }
+    .admin-card:hover {
+        box-shadow: 0 0 25px rgba(255, 210, 127, 0.3);
+        transform: translateY(-4px);
+    }
 
-        .media {
+    .admin-card img,
+    .admin-card video {
+        width: 180px;
+        height: 180px;
+        border-radius: 10px;
+        object-fit: cover;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+
+    .admin-card b {
+        color: #ffd27f;
+    }
+
+    .btn-danger {
+        background: #ff6666;
+        border: none;
+        transition: 0.3s;
+    }
+
+    .btn-danger:hover {
+        background: #ff4444;
+    }
+
+    .btn-warning {
+        background: #ffd27f;
+        color: black;
+        border: none;
+        transition: 0.3s;
+    }
+
+    .btn-warning:hover {
+        background: #ffcc66;
+    }
+
+    @media(max-width:700px) {
+
+        .admin-card img,
+        .admin-card video {
             width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-            display: block;
+            height: auto;
         }
+    }
+</style>
 
-        .content {
-            padding: 12px 14px;
-        }
+<div class="admin-panel">
+    <div class="admin-header">Admin Panel — All Uploaded Posts</div>
 
-        .meta {
-            font-size: 12px;
-            opacity: .9;
-            margin-bottom: 6px;
-        }
+    {% for p in docs %}
+    <div class="admin-card">
+        {% if 'mp4' in p.url or 'webm' in p.url %}
+        <video src="{{ p.url }}" controls></video>
+        {% else %}
+        <img src="{{ p.url }}" alt="post">
+        {% endif %}
 
-        .desc {
-            font-size: 13px;
-            white-space: pre-line;
-        }
+        <p><b>Place:</b> {{ p.place or "Unknown" }}</p>
+        <p><b>Date:</b> {{ p.date or "N/A" }}</p>
+        <p>{{ p.desc }}</p>
 
-        .btn {
-            background: #ff3366;
-            color: white;
-            text-decoration: none;
-            padding: 6px 10px;
-            border-radius: 8px;
-            display: inline-block;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        @media(max-width:700px) {
-            .wrap {
-                padding: 14px;
-            }
-        }
-    </style>
-
-</head>
-
-<body>
-
-    <div class="wrap">
-        <h2>ADMIN PANEL</h2>
-
-        <a class="btn" href="/feed">Back to Feed</a>
-        <a class="btn" href="/admin/feedbacks" style="background:#4478ff">Feedbacks</a>
-        <a class="btn" href="/logout" style="background:#444">Logout</a>
-
-        <br><br>
-
-        <div class="grid">
-            {% for d in docs %}
-            <div class="card">
-                {% set video = d.url.endswith('.mp4') or d.url.endswith('.webm') or d.url.endswith('.mov') %}
-                {% if video %}
-                <video class="media" src="{{ d.url }}" controls playsinline></video>
-                {% else %}
-                <img class="media" src="{{ d.url }}" alt="">
-                {% endif %}
-                <div class="content">
-                    <div class="meta">{{ d.owner }} • {{ d.place }} • {{ d.date }}</div>
-                    <div class="desc">{{ d.desc }}</div>
-
-                    <a class="btn" href="{{ url_for('edit_post', id=d._id) }}">Edit</a>
-
-                    <form action="{{ url_for('delete_post', id=d._id) }}" method="POST" style="display:inline-block"
-                        onsubmit="return confirm('Confirm Delete?');">
-                        <button class="btn" style="background:#222">Delete</button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
+        <div class="d-flex gap-2 mt-2">
+            <a href="{{ url_for('edit_post', id=p._id) }}" class="btn btn-warning btn-sm">Edit</a>
+            <form action="{{ url_for('delete_post', id=p._id) }}" method="POST"
+                onsubmit="return confirm('Delete this post permanently?')">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
         </div>
-
     </div>
+    {% endfor %}
+</div>
 
-</body>
-
-</html>
+{% endblock %}

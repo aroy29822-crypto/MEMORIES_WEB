@@ -4,41 +4,128 @@
 <style>
     .memory-block {
         width: 100%;
-        max-width: 1250px;
-        margin: 0 auto 90px auto;
-        color: rgb(255, 255, 255);
-        font-size: 17px;
-        line-height: 1.35;
+        max-width: 1150px;
+        margin: 0 auto 100px auto;
+        color: white;
+        font-size: 18px;
+        line-height: 1.45;
         white-space: pre-line;
+        overflow: hidden;
         opacity: 0;
-        transform: translateY(40px) scale(.97);
-        transition: all .5s;
+        transform: translateX(0);
+        transition: all 0.8s ease;
     }
 
     .memory-block.show {
         opacity: 1;
-        transform: translateY(0) scale(1);
+    }
+
+    /* Animate picture (opposite direction) */
+    .memory-left .picture {
+        animation: imgFromRight 0.8s ease forwards;
+    }
+
+    .memory-right .picture {
+        animation: imgFromLeft 0.8s ease forwards;
+    }
+
+    /* Animate text (opposite side of image) */
+    .memory-left .memory-text {
+        animation: textFromLeft 0.9s ease forwards;
+    }
+
+    .memory-right .memory-text {
+        animation: textFromRight 0.9s ease forwards;
+    }
+
+    @keyframes imgFromRight {
+        from {
+            opacity: 0;
+            transform: translateX(70px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes imgFromLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-70px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes textFromLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-60px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes textFromRight {
+        from {
+            opacity: 0;
+            transform: translateX(60px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
 
     .picture {
-        width: 130px;
-        height: 130px;
+        width: 220px;
+        height: 220px;
         object-fit: cover;
-        border-radius: 10px;
-        box-shadow: 0 0 22px rgba(0, 0, 0, .45);
+        border-radius: 12px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, .45);
         cursor: pointer;
     }
 
     .memory-text {
         display: block;
         margin-top: 0;
-        padding-top: 0;
     }
 
+    /* ===== MOBILE RESPONSIVE ===== */
     @media(max-width:700px) {
         .picture {
-            width: 110px;
-            height: 110px;
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+        }
+
+        .memory-text {
+            font-size: 16px;
+            line-height: 1.4;
+            text-align: justify;
+        }
+
+        .memory-left .picture {
+            float: left;
+            margin-right: 10px;
+        }
+
+        .memory-right .picture {
+            float: right;
+            margin-left: 10px;
+        }
+
+        .memory-block {
+            margin-bottom: 80px;
         }
     }
 </style>
@@ -47,48 +134,130 @@
 <div class="container py-5" style="max-width:1250px;margin:auto;">
 
     {% if show_popup %}
-    <div id="welcome-box">
+    <div id="welcome-box"
+        style="position: fixed; bottom: 18px; left: 18px; max-width: 240px; background: rgba(0,0,0,.68); color: white; padding: 18px 22px; border-radius: 14px; font-size: 19px; z-index: 9999; animation: slideIn .6s forwards, slideOut .6s forwards 2.6s;">
         Hi {{ firstname }}!<br><small>{{ quote }}</small>
     </div>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                left: -250px;
+                opacity: 0;
+            }
+
+            to {
+                left: 18px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                left: 18px;
+                opacity: 1;
+            }
+
+            to {
+                left: 350px;
+                opacity: 0;
+            }
+        }
+    </style>
     {% endif %}
 
     {% for p in docs %}
-
-    <div class="memory-block" style="clear:both;{% if loop.index0%2==0 %}float:left;{% else %}float:right;{% endif %}">
-
+    <div class="memory-block {% if loop.index0%2==0 %}memory-left{% else %}memory-right{% endif %}" style="clear:both;">
 
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
         <video class="picture"
-            style="{% if loop.index0%2==0 %}float:left;margin-right:65px{% else %}float:right;margin-left:65px{% endif %}"
+            style="{% if loop.index0%2==0 %}float:left;margin-right:40px;{% else %}float:right;margin-left:40px;{% endif %}"
             data-full="{{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}" controls
             onclick="zoomMedia(this,true)" loading="lazy"></video>
         {% else %}
         <img class="picture"
-            style="{% if loop.index0%2==0 %}float:left;margin-right:45px{% else %}float:right;margin-left:45px{% endif %}" " data-full="
-            {{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}"
+            style="{% if loop.index0%2==0 %}float:left;margin-right:40px;{% else %}float:right;margin-left:40px;{% endif %}"
+            data-full="{{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}"
             onclick="zoomMedia(this,false)" loading="lazy">
         {% endif %}
+
         <div class="memory-text">{{ p.desc }}</div>
         <div style="clear:both"></div>
     </div>
-
     {% endfor %}
-
-    <div style="height:100px"></div>
-
 </div>
 
-
-<!-- your same zoom + feedback scripts stay same -->
+<!-- Feedback box -->
+<div id="feedback-box" style="display:none;margin-top:80px;">
+    <form action="/feedback" method="POST">
+        <textarea name="msg" placeholder="Feedback..."
+            style="width:230px;height:70px;border-radius:8px;padding:8px;"></textarea>
+        <button class="btn btn-primary btn-sm mt-2 w-100">Send</button>
+    </form>
+</div>
 
 <script>
-    function reveal() {
-        document.querySelectorAll(".memory-block").forEach(r => {
-            if (r.getBoundingClientRect().top < window.innerHeight - 70) r.classList.add("show");
-        })
+    function animateOnScroll() {
+        const blocks = document.querySelectorAll(".memory-block");
+        blocks.forEach((block, index) => {
+            const rect = block.getBoundingClientRect();
+            if (rect.top < window.innerHeight - 100 && !block.classList.contains("show")) {
+                block.classList.add("show");
+
+                const pic = block.querySelector('.picture');
+                const txt = block.querySelector('.memory-text');
+
+                // Even index → image left, text right
+                if (index % 2 === 0) {
+                    pic.classList.add("slideFromRight");
+                    txt.classList.add("slideFromLeft");
+                } else {
+                    // Odd index → image right, text left
+                    pic.classList.add("slideFromLeft");
+                    txt.classList.add("slideFromRight");
+                }
+            }
+        });
     }
-    window.addEventListener("scroll", reveal)
-    window.addEventListener("load", reveal)
+
+    window.addEventListener("scroll", animateOnScroll);
+    window.addEventListener("load", animateOnScroll);
 </script>
+
+<style>
+    /* === Animation styles for feed === */
+    .slideFromLeft {
+        animation: slideFromLeft 0.9s ease forwards;
+    }
+
+    .slideFromRight {
+        animation: slideFromRight 0.9s ease forwards;
+    }
+
+    @keyframes slideFromLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-70px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideFromRight {
+        from {
+            opacity: 0;
+            transform: translateX(70px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
+
 
 {% endblock %}

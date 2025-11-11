@@ -1,16 +1,75 @@
 {% extends "base.html" %}
 {% block body %}
 
-<div class="container text-light py-4">
-  <h3>All Feedbacks</h3>
-  <hr class="border-light">
+<style>
+  .feedback-container {
+    max-width: 850px;
+    margin: 60px auto;
+    color: white;
+    animation: slideInFromRight 0.8s ease forwards;
+    transform: translateX(50px);
+    opacity: 0;
+  }
 
-  {% for f in docs %}
-    <div class="mb-3 p-3 bg-dark bg-opacity-50 rounded">
-      <b>{{f.user}}</b>
-      <p>{{f.msg}}</p>
-      <small>{{f.time}}</small>
+  @keyframes slideInFromRight {
+    from {
+      opacity: 0;
+      transform: translateX(70px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .feedback-header {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 35px;
+    font-weight: 600;
+    color: #ffeecf;
+    animation: fadeDown 0.7s ease forwards;
+  }
+
+  .feedback-item {
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
+    margin-bottom: 20px;
+    transition: 0.3s;
+  }
+
+  .feedback-item:hover {
+    box-shadow: 0 0 25px rgba(255, 210, 127, 0.3);
+    transform: translateY(-3px);
+  }
+
+  .feedback-user {
+    color: #ffd27f;
+    font-weight: 600;
+  }
+
+  @media(max-width:600px) {
+    .feedback-item {
+      font-size: 15px;
+    }
+  }
+</style>
+
+<div class="feedback-container">
+  <div class="feedback-header">User Feedbacks 💬</div>
+
+  {% for fb in docs %}
+  <div class="feedback-item">
+    <div class="feedback-user">{{ fb.user }}</div>
+    <div style="opacity:0.9;">{{ fb.msg }}</div>
+    <div style="font-size:13px;opacity:0.6;margin-top:6px;">
+      {{ fb.time.strftime('%Y-%m-%d %H:%M:%S') }}
     </div>
+  </div>
   {% endfor %}
 </div>
 

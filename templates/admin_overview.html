@@ -1,61 +1,140 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container py-4 text-light">
-    <h2>Admin — Overview</h2>
-    <div class="mb-3">
-        <strong>Total users:</strong> {{ total_users }} &nbsp; | &nbsp;
-        <strong>Total posts:</strong> {{ total_posts }}
+
+<style>
+    .overview-container {
+        max-width: 1150px;
+        margin: 60px auto;
+        color: white;
+        animation: slideInFromBottom 0.8s ease forwards;
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    @keyframes slideInFromBottom {
+        from {
+            opacity: 0;
+            transform: translateY(70px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .overview-header {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 40px;
+        color: #ffeecf;
+        animation: fadeDown 0.7s ease forwards;
+    }
+
+    .stats-box {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: rgba(0, 0, 0, 0.55);
+        padding: 25px 35px;
+        border-radius: 16px;
+        text-align: center;
+        min-width: 200px;
+        box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+        transition: 0.3s;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 0 25px rgba(255, 210, 127, 0.3);
+        transform: translateY(-4px);
+    }
+
+    .stat-num {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffd27f;
+    }
+
+    .table-container {
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        padding: 25px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.35);
+    }
+
+    table {
+        width: 100%;
+        color: white;
+    }
+
+    th,
+    td {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    th {
+        color: #ffd27f;
+        font-weight: 600;
+    }
+
+    @media(max-width:700px) {
+        .stat-card {
+            min-width: 140px;
+            padding: 15px;
+        }
+
+        .stat-num {
+            font-size: 24px;
+        }
+
+        th,
+        td {
+            font-size: 13px;
+        }
+    }
+</style>
+
+<div class="overview-container">
+    <div class="overview-header">Admin Overview Dashboard</div>
+
+    <div class="stats-box">
+        <div class="stat-card">
+            <div class="stat-num">{{ total_users }}</div>
+            <div>Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">{{ total_posts }}</div>
+            <div>Posts</div>
+        </div>
     </div>
 
-    <h4>Users</h4>
-    <table class="table table-dark table-striped">
-        <thead>
+    <div class="table-container">
+        <h4>Recent User Activity Logs</h4>
+        <table>
             <tr>
-                <th>Email</th>
-                <th>Created</th>
-                <th>Last login</th>
-                <th>Actions</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>Time</th>
             </tr>
-        </thead>
-        <tbody>
-            {% for u in users %}
+            {% for l in logs %}
             <tr>
-                <td>{{ u.email }}</td>
-                <td>{{ u.created_at.strftime("%Y-%m-%d %H:%M") if u.created_at else "-" }}</td>
-                <td>{{ u.last_login.strftime("%Y-%m-%d %H:%M") if u.last_login else "-" }}</td>
-                <td>
-                    <a class="btn btn-sm btn-primary" href="{{ url_for('admin_user_profile', email=u.email) }}">View
-                        profile</a>
-                    <a class="btn btn-sm btn-warning" href="{{ url_for('admin_reset_password', email=u.email) }}">Reset
-                        password</a>
-                </td>
+                <td>{{ l.user }}</td>
+                <td>{{ l.action }}</td>
+                <td>{{ l.details }}</td>
+                <td>{{ l.time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
             </tr>
             {% endfor %}
-        </tbody>
-    </table>
-
-    <h4 class="mt-4">Recent logs (latest 200)</h4>
-    <div style="max-height:400px; overflow:auto;">
-        <table class="table table-dark table-sm">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for L in logs %}
-                <tr>
-                    <td>{{ L.time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-                    <td>{{ L.user }}</td>
-                    <td>{{ L.action }}</td>
-                    <td>{{ L.details }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
         </table>
     </div>
 </div>
+
 {% endblock %}
