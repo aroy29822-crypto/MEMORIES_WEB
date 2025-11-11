@@ -1,24 +1,18 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
 from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
+import os
+import random
 
 load_dotenv()
 
-ALLOWED_EXT = {'png','jpg','jpeg','gif','mp4','mov','avi','mkv','webm'}
-print("DEBUG CLOUD KEY:", os.getenv("CLOUD_API_KEY"))
-
-cloudinary.config(
-    cloud_name=os.getenv("CLOUD_NAME"),
-    api_key=os.getenv("CLOUD_API_KEY"),
-    api_secret=os.getenv("CLOUD_API_SECRET")
-)
-
+# ---------- Flask and Mongo setup ----------
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET", "secret")
 
@@ -27,12 +21,19 @@ client = MongoClient(MONGO_URI)
 db = client["memories_db"]
 users = db["users"]
 posts = db["posts"]
-feedbacks = db['feedbacks']
-login_logs = db['login_logs']
-logs = db['logs']  # audit logs
+feedbacks = db["feedbacks"]
+login_logs = db["login_logs"]
+logs = db["logs"]  # audit logs
+
+# ---------- Cloudinary setup ----------
+ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'mkv', 'webm'}
+cloudinary.config(
+    cloud_name=os.getenv("CLOUD_NAME"),
+    api_key=os.getenv("CLOUD_API_KEY"),
+    api_secret=os.getenv("CLOUD_API_SECRET")
+)
 
 ADMIN_EMAIL = "aroy29822@gmail.com"
-import random
 
 QUOTES = [
     "Memories are little time capsules we can open anytime.",
@@ -48,7 +49,7 @@ QUOTES = [
 ]
 
 
-# ---------- logging helper ----------
+# ---------- Helpers ----------
 def log_action(user_email, action, details=None):
     try:
         logs.insert_one({
@@ -58,17 +59,55 @@ def log_action(user_email, action, details=None):
             "time": datetime.utcnow()
         })
     except Exception:
-        # do not break the app if logging fails
         pass
 
 
-# ---------- context ----------
+def update_last_active(user_email):
+    try:
+        users.update_one({"email": user_email}, {"$set": {"last_active": datetime.utcnow()}})
+    except Exception:
+        pass
+
+
+def require_active_user(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user" in session:
+            me = session["user"].lower()
+            user = users.find_one({"email": me})
+            if user:
+                update_last_active(me)
+            if user and user.get("blocked"):
+                session.pop("user", None)
+                flash("Your account was blocked by Admin. You’ve been logged out.")
+                return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.before_request
+def check_blocked_user():
+    safe_routes = ["login", "register", "static", "check_status"]
+    if any(request.endpoint and r in request.endpoint for r in safe_routes):
+        return
+
+    if "user" in session:
+        me = session["user"].lower()
+        user = users.find_one({"email": me})
+        if user:
+            update_last_active(me)
+        if user and user.get("blocked"):
+            session.pop("user", None)
+            flash("Your account was blocked by Admin. You have been logged out.")
+            return redirect(url_for("login"))
+
+
 @app.context_processor
 def inject_admin():
     return dict(ADMIN_EMAIL=ADMIN_EMAIL)
 
 
-# ---------- routes ----------
+# ---------- Routes ----------
 @app.route("/")
 def index():
     if "user" in session:
@@ -76,54 +115,47 @@ def index():
     return redirect(url_for("login"))
 
 
-@app.route("/login", methods=["GET","POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     msg = ""
-    QUOTES_LOCAL = [
-        "Welcome back!",
-        "Nice to see you again 🤝",
-        "Today is your day!",
-        "Happiness looks good on you!",
-        "You’re one step closer than yesterday!",
-    ]
-
     if request.method == "POST":
         email = request.form["email"].lower()
         password = request.form["password"]
         user = users.find_one({"email": email})
 
+        if not user:
+            flash("No such user found.")
+            return redirect(url_for("login"))
+
+        if user.get("blocked"):
+            flash("Your account has been blocked by Admin.")
+            return redirect(url_for("login"))
+
         if user and check_password_hash(user["password"], password):
-            # set session to normalized (lowercase) email
             session["user"] = email
             session["just_logged"] = True
-            if user.get("blocked"):
-               flash("Your account has been blocked by Admin.")
-               return redirect(url_for("login"))
-
-            
-            # update last_login and insert login log
-            try:
-                users.update_one({"email": email}, {"$set": {"last_login": datetime.utcnow()}})
-                login_logs.insert_one({"user": email, "time": datetime.utcnow(), "action": "login"})
-            except Exception:
-                pass
-
+            users.update_one({"email": email}, {"$set": {"last_login": datetime.utcnow()}})
+            login_logs.insert_one({"user": email, "time": datetime.utcnow(), "action": "login"})
+            if email == ADMIN_EMAIL:
+                return redirect(url_for("admin_overview"))
             return redirect(url_for("feed"))
+        else:
+            flash("Wrong password.")
+            return redirect(url_for("login"))
 
-        flash("Invalid credentials")
-    return render_template("login.html", message=msg, go_feed=False)
+    return render_template("login.html", message=msg)
 
 
-@app.route("/register", methods=["GET","POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        first = request.form.get("first","").strip()
-        last  = request.form.get("last","").strip()
-        email = request.form.get("email","").lower()
-        password = request.form.get("password","")
+        first = request.form.get("first", "").strip()
+        last = request.form.get("last", "").strip()
+        email = request.form.get("email", "").lower()
+        password = request.form.get("password", "")
 
         if users.find_one({"email": email}):
-            flash("Already registered")
+            flash("Already registered.")
             return redirect(url_for("register"))
 
         users.insert_one({
@@ -134,26 +166,27 @@ def register():
             "created_at": datetime.utcnow(),
             "last_login": None
         })
-
-        flash("Registered successfully. Now Login.")
+        flash("Registered successfully. Now login.")
         return redirect(url_for("login"))
-
     return render_template("register.html")
 
+
+# ----- Admin block/unblock -----
 @app.post("/admin/block/<email>")
 def admin_block_user(email):
     if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
-        flash("Admin only")
+        flash("Admin only.")
         return redirect(url_for("feed"))
     users.update_one({"email": email.lower()}, {"$set": {"blocked": True}})
     log_action(session["user"], "block_user", {"email": email})
     flash(f"{email} blocked successfully.")
     return redirect(url_for("admin_users"))
 
+
 @app.post("/admin/unblock/<email>")
 def admin_unblock_user(email):
     if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
-        flash("Admin only")
+        flash("Admin only.")
         return redirect(url_for("feed"))
     users.update_one({"email": email.lower()}, {"$set": {"blocked": False}})
     log_action(session["user"], "unblock_user", {"email": email})
@@ -174,45 +207,39 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/upload", methods=["GET","POST"])
+# ---------- Upload ----------
+@app.route("/upload", methods=["GET", "POST"])
+@require_active_user
 def upload():
     if "user" not in session:
         return redirect(url_for("login"))
 
     if request.method == "POST":
         file = request.files.get("file")
-        place = request.form.get("place","").strip()
-        date  = request.form.get("date","").strip()
-        desc  = request.form.get("desc","").strip()
+        place = request.form.get("place", "").strip()
+        date = request.form.get("date", "").strip()
+        desc = request.form.get("desc", "").strip()
 
         if not file or file.filename == "":
-            flash("Select a file")
+            flash("Select a file.")
             return redirect(url_for("upload"))
 
-        ext = file.filename.rsplit(".",1)[-1].lower()
+        ext = file.filename.rsplit(".", 1)[-1].lower()
         if ext not in ALLOWED_EXT:
-            flash("File type not allowed")
+            flash("File type not allowed.")
             return redirect(url_for("upload"))
 
-        # 100 MB size limit
         raw = file.read()
         if len(raw) > 100 * 1024 * 1024:
-            flash("File too large (Max 100 MB)")
+            flash("File too large (Max 100 MB).")
             return redirect(url_for("upload"))
         file.seek(0)
 
-        try:
-            up = cloudinary.uploader.upload(file, resource_type="auto")
-            url = up["secure_url"]
-        except Exception as e:
-            flash("Upload failed: " + str(e))
-            return redirect(url_for("upload"))
-
-        # normalize owner email to lowercase
-        owner_email = session["user"].lower()
+        up = cloudinary.uploader.upload(file, resource_type="auto")
+        url = up["secure_url"]
 
         posts.insert_one({
-            "owner": owner_email,
+            "owner": session["user"].lower(),
             "url": url,
             "place": place,
             "date": date,
@@ -220,42 +247,31 @@ def upload():
             "time": datetime.utcnow()
         })
 
-        log_action(owner_email, "upload", {"url": url, "place": place})
-        flash("Uploaded")
+        log_action(session["user"], "upload", {"url": url, "place": place})
+        flash("Uploaded successfully.")
         return redirect(url_for("feed"))
 
     return render_template("upload.html")
 
 
+# ---------- Feed ----------
 @app.route("/feed")
+@require_active_user
 def feed():
     if "user" not in session:
         return redirect(url_for("login"))
-
     me = session["user"].lower()
     user = users.find_one({"email": me})
-
-    # ✅ get posts oldest first (so memories appear in timeline order)
     docs = list(posts.find().sort("time", 1))
-
-    # ✅ if there are no posts at all
-    if not docs:
-        flash("No memories shared yet! Upload your first photo or video ✨")
-
     firstname = (user or {}).get("first_name", "Friend")
     quote = random.choice(QUOTES)
     show_popup = session.pop("just_logged", None)
-
-    return render_template("feed.html",
-                           docs=docs,
-                           firstname=firstname,
-                           quote=quote,
-                           show_popup=show_popup)
+    return render_template("feed.html", docs=docs, firstname=firstname, quote=quote, show_popup=show_popup)
 
 
-
-
+# ---------- Profile ----------
 @app.route("/profile")
+@require_active_user
 def profile():
     if "user" not in session:
         return redirect(url_for("login"))
@@ -264,44 +280,45 @@ def profile():
     return render_template("profile.html", me=me, docs=docs)
 
 
-@app.route('/edit/<id>', methods=['GET','POST'])
+# ---------- Edit ----------
+@app.route("/edit/<id>", methods=["GET", "POST"])
 def edit_post(id):
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    me = session['user'].lower()
-    try:
-        doc = posts.find_one({"_id": ObjectId(id)})
-    except Exception:
-        flash("Invalid id")
-        return redirect(url_for('feed'))
-
+    if "user" not in session:
+        return redirect(url_for("login"))
+    me = session["user"].lower()
+    doc = posts.find_one({"_id": ObjectId(id)})
     if not doc:
-        flash("Not found")
-        return redirect(url_for('feed'))
-
-    # owner or admin only
-    if doc.get('owner') != me and me != ADMIN_EMAIL:
-        flash("No permission to edit")
-        return redirect(url_for('feed'))
-
-    if request.method == 'POST':
-        new_desc  = request.form.get('desc','').strip()
-        new_place = request.form.get('place','').strip()
-        new_date  = request.form.get('date','').strip()
-
-        posts.update_one(
-            {"_id": doc["_id"]},
-            {"$set": {"desc": new_desc, "place": new_place, "date": new_date}}
-        )
-        log_action(me, "edit", {"post_id": str(doc["_id"])})
-        flash("Updated")
-        return redirect(url_for('admin') if me == ADMIN_EMAIL else url_for('profile'))
-
+        flash("Post not found.")
+        return redirect(url_for("feed"))
+    if doc.get("owner") != me and me != ADMIN_EMAIL:
+        flash("No permission.")
+        return redirect(url_for("feed"))
+    if request.method == "POST":
+        new_desc = request.form.get("desc", "").strip()
+        new_place = request.form.get("place", "").strip()
+        new_date = request.form.get("date", "").strip()
+        posts.update_one({"_id": doc["_id"]}, {"$set": {"desc": new_desc, "place": new_place, "date": new_date}})
+        flash("Updated successfully.")
+        return redirect(url_for("admin") if me == ADMIN_EMAIL else url_for("profile"))
     return render_template("edit.html", doc=doc)
 
 
-# ----- classic admin (posts grid) -----
+# ---------- Admin: Overview ----------
+@app.route("/admin/overview")
+def admin_overview():
+    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
+        return redirect(url_for("login"))
+    users_list = list(users.find({}, {"password": 0}).sort("created_at", -1))
+    recent_logs = list(logs.find().sort("time", -1).limit(200))
+    total_users = users.count_documents({})
+    total_posts = posts.count_documents({})
+    return render_template("admin_overview.html",
+                           users=users_list,
+                           logs=recent_logs,
+                           total_users=total_users,
+                           total_posts=total_posts)
+
+# ---------- Admin: All Posts (Classic Admin Page) ----------
 @app.route("/admin")
 def admin():
     if "user" not in session:
@@ -309,134 +326,91 @@ def admin():
     if session["user"].lower() != ADMIN_EMAIL:
         flash("Admin only")
         return redirect(url_for("feed"))
+
     docs = list(posts.find().sort("time", -1))
     return render_template("admin.html", docs=docs)
 
+# ---------- Admin: Live Stats ----------
+@app.route("/admin/live_stats")
+def admin_live_stats():
+    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
+        return jsonify({"error": "unauthorized"}), 403
 
-@app.post('/delete/<id>')
-def delete_post(id):
-    if 'user' not in session or session['user'].lower() != ADMIN_EMAIL:
-        flash("Admin only")
-        return redirect(url_for('feed'))
-    try:
-        posts.delete_one({"_id": ObjectId(id)})
-    except Exception:
-        flash("Delete failed")
-        return redirect(url_for('admin'))
-    log_action(session["user"].lower(), "delete", {"post_id": id})
-    flash("Post deleted.")
-    return redirect(url_for('admin'))
+    total_users = users.count_documents({})
+    total_posts = posts.count_documents({})
+    total_feedback = feedbacks.count_documents({})
+    threshold = datetime.utcnow() - timedelta(minutes=3)
+    online_users = list(users.find({"last_active": {"$gte": threshold}}, {"email": 1, "_id": 0}))
+    recent_logins = list(login_logs.find().sort("time", -1).limit(10))
+    recent_uploads = list(posts.find().sort("time", -1).limit(5))
+    for rec in recent_logins + recent_uploads:
+        rec["time"] = rec["time"].strftime("%H:%M:%S %d-%b")
+    return jsonify({
+        "total_users": total_users,
+        "total_posts": total_posts,
+        "total_feedback": total_feedback,
+        "online_users": [u["email"] for u in online_users],
+        "recent_logins": recent_logins,
+        "recent_uploads": recent_uploads
+    })
 
-
-# ----- feedback (from feed page) -----
-@app.post('/feedback')
-def feedback():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    msg = request.form.get("msg","").strip()
-    if msg:
-        feedbacks.insert_one({
-            "user": session["user"].lower(),
-            "msg": msg,
-            "time": datetime.utcnow()
+# ---------- NEW: Admin Live User JSON ----------
+@app.route("/admin/live_users_json")
+def admin_live_users_json():
+    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
+        return jsonify({"error": "unauthorized"}), 403
+    threshold = datetime.utcnow() - timedelta(minutes=3)
+    all_users = list(users.find({}, {"email": 1, "last_active": 1, "blocked": 1}))
+    live_data = []
+    for u in all_users:
+        is_online = bool(u.get("last_active") and u["last_active"] >= threshold)
+        live_data.append({
+            "email": u["email"],
+            "is_online": is_online,
+            "blocked": u.get("blocked", False)
         })
-        log_action(session["user"].lower(), "feedback")
-    flash("Thanks for your lovely feedback 💗")
-    return redirect(url_for('feed'))
-
-
-# ----- admin: feedback viewer -----
+    return jsonify(live_data)
+# ---------- Admin: Feedback Viewer ----------
 @app.route("/admin/feedbacks")
 def admin_feedback():
     if "user" not in session:
         return redirect(url_for('login'))
     if session["user"].lower() != ADMIN_EMAIL:
-        flash("not admin")
+        flash("Admin only")
         return redirect(url_for('feed'))
 
-    docs = list(feedbacks.find().sort("time",-1))
+    docs = list(feedbacks.find().sort("time", -1))
     return render_template("feedback_admin.html", docs=docs)
 
 
-# ----- NEW: admin overview (users + logs dashboard) -----
-@app.route("/admin/overview")
-def admin_overview():
+# ---------- Admin: Users Page ----------
+@app.route("/admin/users")
+def admin_users():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    if session["user"].lower() != ADMIN_EMAIL:
+        flash("Admin only.")
+        return redirect(url_for("feed"))
+    all_users = list(users.find().sort("created_at", -1))
+    threshold = datetime.utcnow() - timedelta(minutes=3)
+    for u in all_users:
+        last_active = u.get("last_active")
+        u["is_online"] = bool(last_active and last_active >= threshold)
+    return render_template("admin_users.html", users=all_users)
+
+# ---------- Admin: View Specific User Profile ----------
+@app.route("/admin/user/<email>")
+def admin_user_profile(email):
     if "user" not in session:
         return redirect(url_for("login"))
     if session["user"].lower() != ADMIN_EMAIL:
         flash("Admin only")
         return redirect(url_for("feed"))
 
-    users_list = list(users.find({}, {"password": 0}).sort("created_at", -1))
-    recent_logs = list(logs.find().sort("time", -1).limit(200))
-    total_users = users.count_documents({})
-    total_posts = posts.count_documents({})
-
-    return render_template("admin_overview.html",
-                           users=users_list,
-                           logs=recent_logs,
-                           total_users=total_users,
-                           total_posts=total_posts)
-
-
-# ----- NEW: admin reset password for a user -----
-@app.route("/admin/reset_password/<email>", methods=["GET","POST"])
-def admin_reset_password(email):
-    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
-        flash("Admin only")
-        return redirect(url_for("feed"))
-
-    u = users.find_one({"email": email.lower()})
-    if not u:
-        flash("User not found.")
-        return redirect(url_for("admin_overview"))
-
-    if request.method == "POST":
-        newpw = request.form.get("password","").strip()
-        if not newpw:
-            flash("Provide a password")
-            return redirect(url_for("admin_reset_password", email=email))
-        users.update_one({"email": email.lower()}, {"$set": {"password": generate_password_hash(newpw)}})
-        log_action(session['user'].lower(), "reset_password", {"for": email.lower()})
-        flash("Password reset for " + email)
-        return redirect(url_for("admin_overview"))
-
-    return render_template("admin_reset_password.html", user_email=email)
-
-
-# ----- NEW: admin view any user's profile -----
-@app.route("/admin/user/<email>")
-def admin_user_profile(email):
-    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
-        flash("Admin only")
-        return redirect(url_for("feed"))
     docs = list(posts.find({"owner": email.lower()}).sort("time", -1))
-    return render_template("admin_user_profile.html", docs=docs, user_email=email.lower())
+    user = users.find_one({"email": email.lower()})
+    return render_template("admin_user_profile.html", docs=docs, user_email=email.lower(), user=user)
 
-
-@app.route("/admin/loginlogs")
-def admin_loginlogs():
-    if "user" not in session:
-        return redirect(url_for('login'))
-    if session["user"].lower() != ADMIN_EMAIL:
-        flash("Admin only")
-        return redirect(url_for('feed'))
-
-    logs_list = list(login_logs.find().sort("time",-1))
-    return render_template("admin_loginlogs.html", logs=logs_list)
-
-
-@app.route("/admin/users")
-def admin_users():
-    if "user" not in session:
-        return redirect(url_for('login'))
-    if session["user"].lower() != ADMIN_EMAIL:
-        flash("Admin only")
-        return redirect(url_for('feed'))
-
-    all_users = list(users.find().sort("created_at",-1))
-    return render_template("admin_users.html", users=all_users)
-
-
+# ---------- App Runner ----------
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

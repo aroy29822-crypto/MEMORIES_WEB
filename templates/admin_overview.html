@@ -7,134 +7,149 @@
         margin: 60px auto;
         color: white;
         animation: slideInFromBottom 0.8s ease forwards;
-        transform: translateY(40px);
         opacity: 0;
+        transform: translateY(50px);
     }
 
     @keyframes slideInFromBottom {
-        from {
-            opacity: 0;
-            transform: translateY(70px);
-        }
-
         to {
             opacity: 1;
             transform: translateY(0);
         }
     }
 
-    .overview-header {
+    .stat-card {
+        background: rgba(0, 0, 0, 0.55);
+        padding: 25px;
+        border-radius: 14px;
         text-align: center;
-        font-size: 28px;
-        font-weight: 600;
-        margin-bottom: 40px;
-        color: #ffeecf;
-        animation: fadeDown 0.7s ease forwards;
+        min-width: 180px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, .3);
+        transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0 25px rgba(255, 220, 130, 0.4);
+    }
+
+    .stat-num {
+        font-size: 30px;
+        color: #ffd27f;
+        font-weight: 700;
     }
 
     .stats-box {
         display: flex;
-        justify-content: center;
         gap: 20px;
+        justify-content: center;
         flex-wrap: wrap;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
     }
 
-    .stat-card {
-        background: rgba(0, 0, 0, 0.55);
-        padding: 25px 35px;
-        border-radius: 16px;
-        text-align: center;
-        min-width: 200px;
-        box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
-        transition: 0.3s;
+    ul {
+        padding-left: 0;
+        list-style: none;
     }
 
-    .stat-card:hover {
-        box-shadow: 0 0 25px rgba(255, 210, 127, 0.3);
-        transform: translateY(-4px);
+    #online-users li {
+        position: relative;
+        margin: 6px 0;
+        padding-left: 18px;
+        opacity: 0;
+        animation: fadeIn 0.6s forwards;
     }
 
-    .stat-num {
-        font-size: 32px;
-        font-weight: 700;
-        color: #ffd27f;
+    #online-users li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 7px;
+        width: 8px;
+        height: 8px;
+        background: #27ff7e;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #27ff7e;
     }
 
-    .table-container {
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(10px);
-        border-radius: 14px;
-        padding: 25px;
-        box-shadow: 0 0 25px rgba(0, 0, 0, 0.35);
-    }
-
-    table {
-        width: 100%;
-        color: white;
-    }
-
-    th,
-    td {
-        padding: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    th {
-        color: #ffd27f;
-        font-weight: 600;
-    }
-
-    @media(max-width:700px) {
-        .stat-card {
-            min-width: 140px;
-            padding: 15px;
-        }
-
-        .stat-num {
-            font-size: 24px;
-        }
-
-        th,
-        td {
-            font-size: 13px;
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
         }
     }
 </style>
 
 <div class="overview-container">
-    <div class="overview-header">Admin Overview Dashboard</div>
+    <h2 class="text-center mb-4">Admin Overview Dashboard</h2>
 
     <div class="stats-box">
         <div class="stat-card">
-            <div class="stat-num">{{ total_users }}</div>
+            <div class="stat-num" id="total-users">{{ total_users }}</div>
             <div>Users</div>
         </div>
         <div class="stat-card">
-            <div class="stat-num">{{ total_posts }}</div>
+            <div class="stat-num" id="total-posts">{{ total_posts }}</div>
             <div>Posts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="total-feedback">--</div>
+            <div>Feedbacks</div>
         </div>
     </div>
 
-    <div class="table-container">
-        <h4>Recent User Activity Logs</h4>
-        <table>
-            <tr>
-                <th>User</th>
-                <th>Action</th>
-                <th>Details</th>
-                <th>Time</th>
-            </tr>
-            {% for l in logs %}
-            <tr>
-                <td>{{ l.user }}</td>
-                <td>{{ l.action }}</td>
-                <td>{{ l.details }}</td>
-                <td>{{ l.time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+    <div class="table-container bg-dark bg-opacity-50 p-3 rounded">
+        <h4>🟢 Online Users</h4>
+        <ul id="online-users">
+            <li>Loading...</li>
+        </ul>
+
+        <h4>🕒 Recent Logins</h4>
+        <ul id="recent-logins">
+            <li>Loading...</li>
+        </ul>
+
+        <h4>📸 Recent Uploads</h4>
+        <ul id="recent-uploads">
+            <li>Loading...</li>
+        </ul>
     </div>
 </div>
+
+<script>
+    function smoothUpdate(id, content) {
+        const el = document.getElementById(id);
+        el.style.opacity = "0";
+        setTimeout(() => {
+            el.innerHTML = content;
+            el.style.opacity = "1";
+        }, 250);
+    }
+
+    function refreshOverview() {
+        fetch("/admin/live_stats")
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+
+                document.getElementById("total-users").textContent = data.total_users;
+                document.getElementById("total-posts").textContent = data.total_posts;
+                document.getElementById("total-feedback").textContent = data.total_feedback;
+
+                smoothUpdate("online-users", data.online_users.length ?
+                    data.online_users.map(u => `<li>${u}</li>`).join('') :
+                    "<i>No one online</i>");
+
+                smoothUpdate("recent-logins", data.recent_logins.map(l =>
+                    `<li>${l.user} - ${l.action} at ${l.time}</li>`).join(''));
+
+                smoothUpdate("recent-uploads", data.recent_uploads.map(p =>
+                    `<li>${p.owner} uploaded at ${p.time}</li>`).join(''));
+            })
+            .catch(() => { });
+    }
+
+    setInterval(refreshOverview, 7000);
+    window.addEventListener("load", refreshOverview);
+</script>
 
 {% endblock %}

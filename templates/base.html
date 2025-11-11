@@ -137,11 +137,9 @@
     <!-- Navbar -->
     <nav>
         {% if "user" in session %}
-        Logged in as <b>{{ session.user }}</b> |
         <a href="{{ url_for('feed') }}">Home</a>
         <a href="{{ url_for('upload') }}">Upload</a>
         <a href="{{ url_for('profile') }}" class="btn btn-outline-light btn-sm">Profile</a>
-
         {% if session.user == ADMIN_EMAIL %}
         | <a href="{{ url_for('admin_feedback') }}">Feedbacks</a>
         <a href="{{ url_for('admin') }}" class="btn btn-outline-warning btn-sm">Admin</a>
@@ -207,6 +205,47 @@
             document.getElementById("zoomVid").pause();
         }
     </script>
+    <script>
+        function showToast(msg) {
+            const t = document.createElement("div");
+            t.textContent = msg;
+            Object.assign(t.style, {
+                position: "fixed",
+                top: "20px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "rgba(0,0,0,0.8)",
+                color: "#fff",
+                padding: "12px 22px",
+                borderRadius: "10px",
+                fontSize: "16px",
+                zIndex: "99999",
+                transition: "opacity 0.5s ease",
+                opacity: "0"
+            });
+            document.body.appendChild(t);
+            setTimeout(() => (t.style.opacity = "1"), 50);
+            setTimeout(() => {
+                t.style.opacity = "0";
+                setTimeout(() => t.remove(), 500);
+            }, 2500);
+        }
+
+        setInterval(() => {
+            fetch("/check_status")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "blocked") {
+                        showToast("⚠️ Your account was blocked by Admin.");
+                        setTimeout(() => (window.location.href = "/login"), 2500);
+                    } else if (data.status === "no_session" || data.status === "no_user") {
+                        window.location.href = "/login";
+                    }
+                })
+                .catch(() => { });
+        }, 5000); // check every 5 seconds
+    </script>
+
 </body>
 
 </html>

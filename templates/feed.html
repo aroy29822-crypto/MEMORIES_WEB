@@ -103,13 +103,13 @@
     /* ===== MOBILE RESPONSIVE ===== */
     @media(max-width:700px) {
         .picture {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             border-radius: 10px;
         }
 
         .memory-text {
-            font-size: 16px;
+            font-size: 15px;
             line-height: 1.4;
             text-align: justify;
         }
@@ -125,7 +125,7 @@
         }
 
         .memory-block {
-            margin-bottom: 80px;
+            margin-bottom: 0px;
         }
     }
 </style>
@@ -194,6 +194,30 @@
             style="width:230px;height:70px;border-radius:8px;padding:8px;"></textarea>
         <button class="btn btn-primary btn-sm mt-2 w-100">Send</button>
     </form>
+    <!-- Floating Feedback Button -->
+    <button id="feedback-toggle" class="btn btn-outline-info rounded-circle"
+        style="position:fixed;bottom:35px;right:35px;width:55px;height:55px;font-size:22px;z-index:9999;">
+        💬
+    </button>
+
+    <script>
+        const toggleBtn = document.getElementById("feedback-toggle");
+        const box = document.getElementById("feedback-box");
+        toggleBtn.addEventListener("click", () => {
+            if (box.style.display === "block") {
+                box.style.display = "none";
+            } else {
+                box.style.display = "block";
+                box.style.position = "fixed";
+                box.style.bottom = "100px";
+                box.style.right = "35px";
+                box.style.background = "rgba(0,0,0,0.7)";
+                box.style.padding = "10px";
+                box.style.borderRadius = "10px";
+            }
+        });
+    </script>
+
 </div>
 
 <script>
@@ -219,6 +243,7 @@
             }
         });
     }
+
 
     window.addEventListener("scroll", animateOnScroll);
     window.addEventListener("load", animateOnScroll);

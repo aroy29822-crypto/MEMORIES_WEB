@@ -1,16 +1,86 @@
 {% extends "base.html" %}
 {% block body %}
 
-<div class="container" style="margin-top:120px;color:white">
-    <h2 class="mb-4 text-center">All Users</h2>
+<style>
+    .user-container {
+        max-width: 1000px;
+        margin: 80px auto;
+        color: white;
+        animation: fadeUp 0.7s ease forwards;
+        opacity: 0;
+        transform: translateY(30px);
+    }
 
-    <table class="table table-dark table-striped align-middle text-center" style="border-radius:10px;overflow:hidden;">
+    @keyframes fadeUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-table {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .user-table th {
+        color: #ffd27f;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .status-online {
+        background: rgba(39, 255, 126, 0.15);
+        color: #27ff7e;
+        box-shadow: 0 0 10px #27ff7e;
+    }
+
+    .status-offline {
+        background: rgba(255, 80, 80, 0.15);
+        color: #ff6464;
+    }
+
+    .btn-sm {
+        font-size: 13px !important;
+        padding: 3px 8px !important;
+    }
+
+    @media(max-width: 700px) {
+
+        .user-table th,
+        .user-table td {
+            font-size: 13px;
+            padding: 8px;
+        }
+    }
+</style>
+
+<div class="user-container">
+    <h2 class="text-center mb-4">👥 All Registered Users</h2>
+
+    <table class="user-table" id="user-table">
         <thead>
             <tr>
                 <th>Email</th>
                 <th>Status</th>
-                <th>Profile</th>
-                <th>Action</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -18,17 +88,15 @@
             <tr>
                 <td>{{ u.email }}</td>
                 <td>
-                    {% if u.get("blocked") %}
-                    <span class="text-danger fw-bold">Blocked</span>
+                    {% if u.is_online %}
+                    <span class="status-badge status-online">🟢 Online</span>
                     {% else %}
-                    <span class="text-success fw-bold">Active</span>
+                    <span class="status-badge status-offline">🔴 Offline</span>
                     {% endif %}
                 </td>
                 <td>
                     <a href="{{ url_for('admin_user_profile', email=u.email) }}" class="btn btn-primary btn-sm">Open</a>
-                </td>
-                <td>
-                    {% if not u.get("blocked") %}
+                    {% if not u.get('blocked') %}
                     <form action="{{ url_for('admin_block_user', email=u.email) }}" method="POST"
                         style="display:inline;">
                         <button class="btn btn-danger btn-sm">Block</button>
@@ -38,6 +106,7 @@
                         style="display:inline;">
                         <button class="btn btn-success btn-sm">Unblock</button>
                     </form>
+                    <span style="color:red;font-weight:bold;">(Blocked)</span>
                     {% endif %}
                 </td>
             </tr>
@@ -45,15 +114,27 @@
         </tbody>
     </table>
 </div>
+
 <script>
-    window.addEventListener("load", () => {
-        document.querySelector(".container").style.opacity = "0";
-        setTimeout(() => {
-            document.querySelector(".container").style.transition = "opacity .8s ease, transform .8s ease";
-            document.querySelector(".container").style.opacity = "1";
-            document.querySelector(".container").style.transform = "translateY(0)";
-        }, 100);
-    });
+    function refreshUserStatuses() {
+        fetch("/admin/live_users_json")
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                const rows = document.querySelectorAll("#user-table tbody tr");
+                data.forEach(u => {
+                    const row = Array.from(rows).find(r => r.cells[0].textContent.trim() === u.email);
+                    if (!row) return;
+                    const statusCell = row.cells[1];
+                    statusCell.innerHTML = u.is_online ?
+                        '<span class="status-badge status-online">🟢 Online</span>' :
+                        '<span class="status-badge status-offline">🔴 Offline</span>';
+                });
+            })
+            .catch(() => { });
+    }
+    setInterval(refreshUserStatuses, 5000);
+    window.addEventListener("load", refreshUserStatuses);
 </script>
 
 {% endblock %}
