@@ -2,6 +2,20 @@
 {% block body %}
 
 <style>
+    /* === Background === */
+    .feed-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
+        filter: blur(20px) brightness(0.4);
+        transform: scale(1.05);
+        z-index: -1;
+    }
+
+    /* --- Main memory block styling --- */
     .memory-block {
         width: 100%;
         max-width: 1150px;
@@ -11,81 +25,19 @@
         line-height: 1.45;
         white-space: pre-line;
         overflow: hidden;
+        transform: perspective(800px) rotateY(25deg) translateY(50px);
+        transform-origin: left center;
         opacity: 0;
-        transform: translateX(0);
-        transition: all 0.8s ease;
+        transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 1s ease;
     }
 
-    .memory-block.show {
+    .memory-block.animate {
+        transform: perspective(800px) rotateY(0deg) translateY(0);
         opacity: 1;
+        filter: drop-shadow(0 0 25px rgba(255, 220, 130, 0.35));
     }
 
-    /* Animate picture (opposite direction) */
-    .memory-left .picture {
-        animation: imgFromRight 0.8s ease forwards;
-    }
-
-    .memory-right .picture {
-        animation: imgFromLeft 0.8s ease forwards;
-    }
-
-    /* Animate text (opposite side of image) */
-    .memory-left .memory-text {
-        animation: textFromLeft 0.9s ease forwards;
-    }
-
-    .memory-right .memory-text {
-        animation: textFromRight 0.9s ease forwards;
-    }
-
-    @keyframes imgFromRight {
-        from {
-            opacity: 0;
-            transform: translateX(70px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes imgFromLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-70px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes textFromLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-60px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes textFromRight {
-        from {
-            opacity: 0;
-            transform: translateX(60px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
+    /* --- Picture (image/video) styling --- */
     .picture {
         width: 220px;
         height: 220px;
@@ -93,14 +45,21 @@
         border-radius: 12px;
         box-shadow: 0 0 25px rgba(0, 0, 0, .45);
         cursor: pointer;
+        transition: transform 0.6s ease, filter 0.6s ease;
     }
 
+    .picture:hover {
+        transform: scale(1.05) rotateZ(1deg);
+        filter: brightness(1.15);
+    }
+
+    /* --- Text --- */
     .memory-text {
         display: block;
         margin-top: 0;
     }
 
-    /* ===== MOBILE RESPONSIVE ===== */
+    /* === Mobile Responsive === */
     @media(max-width:700px) {
         .picture {
             width: 120px;
@@ -125,11 +84,13 @@
         }
 
         .memory-block {
-            margin-bottom: 0px;
+            margin-bottom: 60px;
         }
     }
 </style>
 
+<!-- Background Blur Layer -->
+<div class="feed-bg"></div>
 
 <div class="container py-5" style="max-width:1250px;margin:auto;">
 
@@ -168,7 +129,6 @@
 
     {% for p in docs %}
     <div class="memory-block {% if loop.index0%2==0 %}memory-left{% else %}memory-right{% endif %}" style="clear:both;">
-
         {% if 'mp4' in p.url or 'webm' in p.url or 'mov' in p.url %}
         <video class="picture"
             style="{% if loop.index0%2==0 %}float:left;margin-right:40px;{% else %}float:right;margin-left:40px;{% endif %}"
@@ -180,20 +140,20 @@
             data-full="{{ p.url }}" src="{{ p.url|replace('/upload/','/upload/w_350,h_350,c_fill/') }}"
             onclick="zoomMedia(this,false)" loading="lazy">
         {% endif %}
-
         <div class="memory-text">{{ p.desc }}</div>
         <div style="clear:both"></div>
     </div>
     {% endfor %}
 </div>
 
-<!-- Feedback box -->
+<!-- Feedback Box -->
 <div id="feedback-box" style="display:none;margin-top:80px;">
     <form action="/feedback" method="POST">
         <textarea name="msg" placeholder="Feedback..."
             style="width:230px;height:70px;border-radius:8px;padding:8px;"></textarea>
         <button class="btn btn-primary btn-sm mt-2 w-100">Send</button>
     </form>
+
     <!-- Floating Feedback Button -->
     <button id="feedback-toggle" class="btn btn-outline-info rounded-circle"
         style="position:fixed;bottom:35px;right:35px;width:55px;height:55px;font-size:22px;z-index:9999;">
@@ -217,72 +177,23 @@
             }
         });
     </script>
-
 </div>
 
+<!-- Flip Scroll Animation -->
 <script>
-    function animateOnScroll() {
-        const blocks = document.querySelectorAll(".memory-block");
-        blocks.forEach((block, index) => {
-            const rect = block.getBoundingClientRect();
-            if (rect.top < window.innerHeight - 100 && !block.classList.contains("show")) {
-                block.classList.add("show");
-
-                const pic = block.querySelector('.picture');
-                const txt = block.querySelector('.memory-text');
-
-                // Even index → image left, text right
-                if (index % 2 === 0) {
-                    pic.classList.add("slideFromRight");
-                    txt.classList.add("slideFromLeft");
+    document.addEventListener("DOMContentLoaded", () => {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("animate");
                 } else {
-                    // Odd index → image right, text left
-                    pic.classList.add("slideFromLeft");
-                    txt.classList.add("slideFromRight");
+                    entry.target.classList.remove("animate");
                 }
-            }
-        });
-    }
+            });
+        }, { threshold: 0.3 });
 
-
-    window.addEventListener("scroll", animateOnScroll);
-    window.addEventListener("load", animateOnScroll);
+        document.querySelectorAll(".memory-block").forEach(block => observer.observe(block));
+    });
 </script>
-
-<style>
-    /* === Animation styles for feed === */
-    .slideFromLeft {
-        animation: slideFromLeft 0.9s ease forwards;
-    }
-
-    .slideFromRight {
-        animation: slideFromRight 0.9s ease forwards;
-    }
-
-    @keyframes slideFromLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-70px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes slideFromRight {
-        from {
-            opacity: 0;
-            transform: translateX(70px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-</style>
-
 
 {% endblock %}

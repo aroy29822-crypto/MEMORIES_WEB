@@ -331,6 +331,7 @@ def admin():
     return render_template("admin.html", docs=docs)
 
 # ---------- Admin: Live Stats ----------
+
 @app.route("/admin/live_stats")
 def admin_live_stats():
     if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
@@ -339,20 +340,40 @@ def admin_live_stats():
     total_users = users.count_documents({})
     total_posts = posts.count_documents({})
     total_feedback = feedbacks.count_documents({})
-    threshold = datetime.utcnow() - timedelta(minutes=3)
-    online_users = list(users.find({"last_active": {"$gte": threshold}}, {"email": 1, "_id": 0}))
+    all_users = list(users.find({}, {"email":1, "last_active":1, "_id":0}))
+
+    threshold_time = datetime.utcnow().timestamp() - 5
+    online_users = [u["email"] for u in all_users if u.get("last_active") and u["last_active"].timestamp() >= threshold_time]
+
     recent_logins = list(login_logs.find().sort("time", -1).limit(10))
     recent_uploads = list(posts.find().sort("time", -1).limit(5))
     for rec in recent_logins + recent_uploads:
         rec["time"] = rec["time"].strftime("%H:%M:%S %d-%b")
+
+    # include all users so frontend can decide who’s online/offline
+    for u in all_users:
+        if u.get("last_active"):
+            u["last_active"] = u["last_active"].isoformat()
+
     return jsonify({
         "total_users": total_users,
         "total_posts": total_posts,
         "total_feedback": total_feedback,
-        "online_users": [u["email"] for u in online_users],
+        "online_users": online_users,
         "recent_logins": recent_logins,
-        "recent_uploads": recent_uploads
+        "recent_uploads": recent_uploads,
+        "all_users": all_users
     })
+
+@app.route("/heartbeat")
+def heartbeat():
+    """Tracks user online activity every few seconds."""
+    if "user" not in session:
+        return jsonify({"status": "no_session"})
+
+    me = session["user"].lower()
+    users.update_one({"email": me}, {"$set": {"last_active": datetime.utcnow()}})
+    return jsonify({"status": "ok"})
 
 # ---------- NEW: Admin Live User JSON ----------
 @app.route("/admin/live_users_json")

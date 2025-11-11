@@ -47,34 +47,78 @@
         margin-bottom: 35px;
     }
 
+    /* --- user status styles --- */
     ul {
         padding-left: 0;
         list-style: none;
     }
 
-    #online-users li {
-        position: relative;
+    .user-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         margin: 6px 0;
-        padding-left: 18px;
+        padding: 6px 0;
         opacity: 0;
         animation: fadeIn 0.6s forwards;
     }
 
-    #online-users li::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 7px;
-        width: 8px;
-        height: 8px;
-        background: #27ff7e;
+    .dot {
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 6px #000;
+    }
+
+    .dot.online {
+        background: #27ff7e;
         box-shadow: 0 0 8px #27ff7e;
+        animation: glow 1.2s infinite alternate;
+    }
+
+    .dot.offline {
+        background: #888;
+        box-shadow: 0 0 6px #444;
+    }
+
+    @keyframes glow {
+        from {
+            opacity: .7;
+        }
+
+        to {
+            opacity: 1;
+        }
     }
 
     @keyframes fadeIn {
         to {
             opacity: 1;
+        }
+    }
+
+    .last-active {
+        font-size: 13px;
+        color: #aaa;
+    }
+
+    .table-container {
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        padding: 25px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.35);
+    }
+
+    @media(max-width:700px) {
+        .stat-card {
+            min-width: 140px;
+            padding: 15px;
+        }
+
+        .stat-num {
+            font-size: 24px;
         }
     }
 </style>
@@ -97,8 +141,8 @@
         </div>
     </div>
 
-    <div class="table-container bg-dark bg-opacity-50 p-3 rounded">
-        <h4>🟢 Online Users</h4>
+    <div class="table-container">
+        <h4>🟢 Live User Status</h4>
         <ul id="online-users">
             <li>Loading...</li>
         </ul>
@@ -119,36 +163,50 @@
     function smoothUpdate(id, content) {
         const el = document.getElementById(id);
         el.style.opacity = "0";
-        setTimeout(() => {
-            el.innerHTML = content;
-            el.style.opacity = "1";
-        }, 250);
+        setTimeout(() => { el.innerHTML = content; el.style.opacity = "1"; }, 250);
+    }
+
+    function timeAgo(utcString) {
+        const then = new Date(utcString).getTime();
+        const now = Date.now();
+        const diff = Math.floor((now - then) / 1000);
+        if (diff < 10) return "just now";
+        if (diff < 60) return diff + "s ago";
+        if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+        return Math.floor(diff / 3600) + "h ago";
     }
 
     function refreshOverview() {
-        fetch("/admin/live_stats")
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) return;
+        fetch("/admin/live_stats").then(res => res.json()).then(data => {
+            if (data.error) return;
 
-                document.getElementById("total-users").textContent = data.total_users;
-                document.getElementById("total-posts").textContent = data.total_posts;
-                document.getElementById("total-feedback").textContent = data.total_feedback;
+            document.getElementById("total-users").textContent = data.total_users;
+            document.getElementById("total-posts").textContent = data.total_posts;
+            document.getElementById("total-feedback").textContent = data.total_feedback;
 
-                smoothUpdate("online-users", data.online_users.length ?
-                    data.online_users.map(u => `<li>${u}</li>`).join('') :
-                    "<i>No one online</i>");
+            const now = Date.now();
+            let usersHtml = "";
+            (data.all_users || []).forEach(u => {
+                const active = u.last_active ? new Date(u.last_active).getTime() : 0;
+                const online = (now - active) <= 5000;
+                usersHtml += `
+              <li class="user-item">
+                <span class="dot ${online ? 'online' : 'offline'}"></span>
+                ${u.email}
+                ${!online ? `<span class="last-active">(${timeAgo(u.last_active)})</span>` : ""}
+              </li>`;
+            });
+            if (!usersHtml) usersHtml = "<li><i>No users yet</i></li>";
+            smoothUpdate("online-users", usersHtml);
 
-                smoothUpdate("recent-logins", data.recent_logins.map(l =>
-                    `<li>${l.user} - ${l.action} at ${l.time}</li>`).join(''));
-
-                smoothUpdate("recent-uploads", data.recent_uploads.map(p =>
-                    `<li>${p.owner} uploaded at ${p.time}</li>`).join(''));
-            })
-            .catch(() => { });
+            const logins = data.recent_logins.map(l => `<li>${l.user} - ${l.action} at ${l.time}</li>`).join('');
+            smoothUpdate("recent-logins", logins);
+            const uploads = data.recent_uploads.map(p => `<li>${p.owner} uploaded at ${p.time}</li>`).join('');
+            smoothUpdate("recent-uploads", uploads);
+        }).catch(() => { });
     }
 
-    setInterval(refreshOverview, 7000);
+    setInterval(refreshOverview, 5000);
     window.addEventListener("load", refreshOverview);
 </script>
 
