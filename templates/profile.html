@@ -123,6 +123,95 @@
             font-size: 15px;
         }
     }
+
+    < !-- Floating Feedback Button --><style>#profile-feedback-btn {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffca85, #ff9d3c);
+        color: black;
+        font-size: 26px;
+        border: none;
+        box-shadow: 0 0 18px rgba(255, 168, 76, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 99999;
+        transition: 0.3s ease;
+    }
+
+    #profile-feedback-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 25px rgba(255, 190, 110, 0.75);
+    }
+
+    #profile-feedback-box {
+        position: fixed;
+        bottom: 100px;
+        right: 25px;
+        width: 250px;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        display: none;
+        z-index: 99999;
+        animation: fadeOpen 0.35s ease;
+    }
+
+    @keyframes fadeOpen {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #profile-feedback-box textarea {
+        width: 100%;
+        height: 70px;
+        border-radius: 8px;
+        padding: 10px;
+        border: none;
+        outline: none;
+    }
+
+    #profile-feedback-box button {
+        margin-top: 8px;
+        width: 100%;
+    }
+</style>
+
+<button id="profile-feedback-btn">💬</button>
+
+<div id="profile-feedback-box">
+    <form action="/feedback" method="POST">
+        <textarea name="msg" placeholder="Write feedback..."></textarea>
+        <button class="btn btn-warning btn-sm">Send</button>
+    </form>
+</div>
+
+<script>
+    const fbBtn = document.getElementById("profile-feedback-btn");
+    const fbBox = document.getElementById("profile-feedback-box");
+
+    fbBtn.addEventListener("click", () => {
+        if (fbBox.style.display === "block") {
+            fbBox.style.display = "none";
+        } else {
+            fbBox.style.display = "block";
+        }
+    });
+</script>
+
 </style>
 
 <div class="profile-container" id="profileContainer">

@@ -95,6 +95,10 @@
                     {% endif %}
                 </td>
                 <td>
+                    <a href="{{ url_for('admin_reset_password', email=u.email) }}" class="btn btn-sm btn-warning">
+                        Reset Password
+                    </a>
+
                     <a href="{{ url_for('admin_user_profile', email=u.email) }}" class="btn btn-primary btn-sm">Open</a>
                     {% if not u.get('blocked') %}
                     <form action="{{ url_for('admin_block_user', email=u.email) }}" method="POST"

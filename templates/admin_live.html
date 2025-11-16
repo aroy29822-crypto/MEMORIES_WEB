@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block body %}
+
+<style>
+    .live-box {
+        max-width: 1100px;
+        margin: 60px auto;
+        padding: 25px;
+        background: rgba(0, 0, 0, 0.55);
+        color: white;
+        border-radius: 14px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #ffd27f;
+    }
+
+    ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .item {
+        margin: 8px 0;
+        padding: 6px 0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .online {
+        background: #27ff7e;
+        box-shadow: 0 0 7px #27ff7e;
+    }
+
+    .offline {
+        background: #888;
+    }
+
+    .time {
+        font-size: 13px;
+        color: #bbb;
+    }
+</style>
+
+<div class="live-box">
+    <h2>Live States (Real-time)</h2>
+
+    <h4>🟢 Online / Offline Users</h4>
+    <ul id="online-users">
+        <li>Loading...</li>
+    </ul>
+
+    <h4 class="mt-4">🕒 Recent Logins</h4>
+    <ul id="recent-logins">
+        <li>Loading...</li>
+    </ul>
+
+    <h4 class="mt-4">📸 Recent Uploads</h4>
+    <ul id="recent-uploads">
+        <li>Loading...</li>
+    </ul>
+</div>
+
+<script>
+    function timeAgo(utc) {
+        const t = new Date(utc).getTime();
+        const diff = (Date.now() - t) / 1000;
+
+        if (diff < 10) return "just now";
+        if (diff < 60) return Math.floor(diff) + "s ago";
+        if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+        return Math.floor(diff / 3600) + "h ago";
+    }
+
+    function loadLive() {
+        fetch("/admin/live_stats").then(r => r.json()).then(data => {
+
+            // Users status
+            let html = "";
+            data.all_users.forEach(u => {
+                const active = u.last_active ? new Date(u.last_active).getTime() : 0;
+                const online = (Date.now() - active) <= 5000;
+
+                html += `
+                <li class="item">
+                    <span class="dot ${online ? 'online' : 'offline'}"></span>
+                    ${u.email}
+                    ${!online ? `<span class="time">(${timeAgo(u.last_active)})</span>` : ""}
+                </li>`;
+            });
+            document.getElementById("online-users").innerHTML = html;
+
+            // Recent logins
+            let logins = data.recent_logins
+                .map(l => `<li class="item">${l.user} - ${l.action} at ${l.time}</li>`)
+                .join("");
+            document.getElementById("recent-logins").innerHTML = logins;
+
+            // Recent uploads
+            let uploads = data.recent_uploads
+                .map(p => `<li class="item">${p.owner} uploaded at ${p.time}</li>`)
+                .join("");
+            document.getElementById("recent-uploads").innerHTML = uploads;
+        });
+    }
+
+    setInterval(loadLive, 5000);
+    window.onload = loadLive;
+</script>
+
+{% endblock %}

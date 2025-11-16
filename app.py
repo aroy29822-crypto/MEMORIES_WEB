@@ -206,6 +206,31 @@ def logout():
             pass
     return redirect(url_for("login"))
 
+@app.route("/admin/reset_password/<email>", methods=["GET", "POST"])
+def admin_reset_password(email):
+    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
+        flash("Admin only.")
+        return redirect(url_for("login"))
+
+    user = users.find_one({"email": email})
+    if not user:
+        flash("User not found.")
+        return redirect(url_for("admin_users"))
+
+    if request.method == "POST":
+        new_pass = request.form.get("new_password", "").strip()
+        if len(new_pass) < 5:
+            flash("Password must be at least 5 characters.")
+            return redirect(request.url)
+
+        users.update_one({"email": email}, {
+            "$set": {"password": generate_password_hash(new_pass)}
+        })
+        
+        flash(f"Password reset successfully for {email}")
+        return redirect(url_for("admin_users"))
+
+    return render_template("admin_reset_password.html", email=email)
 
 # ---------- Upload ----------
 @app.route("/upload", methods=["GET", "POST"])
@@ -302,6 +327,20 @@ def edit_post(id):
         return redirect(url_for("admin") if me == ADMIN_EMAIL else url_for("profile"))
     return render_template("edit.html", doc=doc)
 
+# ---------- Admin Delete Post ----------
+@app.post("/delete/<id>")
+def delete_post(id):
+    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
+        flash("Admin only.")
+        return redirect(url_for("feed"))
+
+    try:
+        posts.delete_one({"_id": ObjectId(id)})
+        flash("Post deleted successfully.")
+    except Exception:
+        flash("Failed to delete.")
+
+    return redirect(url_for("admin"))
 
 # ---------- Admin: Overview ----------
 @app.route("/admin/overview")
@@ -330,9 +369,16 @@ def admin():
     docs = list(posts.find().sort("time", -1))
     return render_template("admin.html", docs=docs)
 
+@app.route("/admin/live")
+def admin_live():
+    if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
+        return redirect(url_for("login"))
+    return render_template("admin_live.html")
+
+
 # ---------- Admin: Live Stats ----------
 
-@app.route("/admin/live_stats")
+"""@app.route("/admin/live_stats")
 def admin_live_stats():
     if "user" not in session or session["user"].lower() != ADMIN_EMAIL:
         return jsonify({"error": "unauthorized"}), 403
@@ -340,17 +386,34 @@ def admin_live_stats():
     total_users = users.count_documents({})
     total_posts = posts.count_documents({})
     total_feedback = feedbacks.count_documents({})
-    all_users = list(users.find({}, {"email":1, "last_active":1, "_id":0}))
+
+    # all users for online status
+    all_users = list(users.find({}, {"email": 1, "last_active": 1, "_id": 0}))
 
     threshold_time = datetime.utcnow().timestamp() - 5
     online_users = [u["email"] for u in all_users if u.get("last_active") and u["last_active"].timestamp() >= threshold_time]
 
-    recent_logins = list(login_logs.find().sort("time", -1).limit(10))
-    recent_uploads = list(posts.find().sort("time", -1).limit(5))
-    for rec in recent_logins + recent_uploads:
-        rec["time"] = rec["time"].strftime("%H:%M:%S %d-%b")
+    # Convert recent logins
+    recent_logins_raw = list(login_logs.find().sort("time", -1).limit(10))
+    recent_logins = [
+        {
+            "user": x["user"],
+            "action": x.get("action", ""),
+            "time": x["time"].strftime("%H:%M:%S %d-%b")
+        }
+        for x in recent_logins_raw
+    ]
 
-    # include all users so frontend can decide who’s online/offline
+    # Convert recent uploads
+    recent_uploads_raw = list(posts.find().sort("time", -1).limit(5))
+    recent_uploads = [
+        {
+            "owner": x["owner"],
+            "time": x["time"].strftime("%H:%M:%S %d-%b")
+        }
+        for x in recent_uploads_raw
+    ]
+
     for u in all_users:
         if u.get("last_active"):
             u["last_active"] = u["last_active"].isoformat()
@@ -363,7 +426,8 @@ def admin_live_stats():
         "recent_logins": recent_logins,
         "recent_uploads": recent_uploads,
         "all_users": all_users
-    })
+    })"""
+
 
 @app.route("/heartbeat")
 def heartbeat():

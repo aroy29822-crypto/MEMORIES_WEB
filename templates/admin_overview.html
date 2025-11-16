@@ -141,22 +141,6 @@
         </div>
     </div>
 
-    <div class="table-container">
-        <h4>🟢 Live User Status</h4>
-        <ul id="online-users">
-            <li>Loading...</li>
-        </ul>
-
-        <h4>🕒 Recent Logins</h4>
-        <ul id="recent-logins">
-            <li>Loading...</li>
-        </ul>
-
-        <h4>📸 Recent Uploads</h4>
-        <ul id="recent-uploads">
-            <li>Loading...</li>
-        </ul>
-    </div>
 </div>
 
 <script>
@@ -176,7 +160,7 @@
         return Math.floor(diff / 3600) + "h ago";
     }
 
-    function refreshOverview() {
+    /*function refreshOverview() {
         fetch("/admin/live_stats").then(res => res.json()).then(data => {
             if (data.error) return;
 
@@ -208,6 +192,6 @@
 
     setInterval(refreshOverview, 5000);
     window.addEventListener("load", refreshOverview);
-</script>
+</script>*/
 
 {% endblock %}

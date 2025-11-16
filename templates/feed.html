@@ -2,19 +2,6 @@
 {% block body %}
 
 <style>
-    /* === Background === */
-    .feed-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
-        filter: blur(20px) brightness(0.4);
-        transform: scale(1.05);
-        z-index: -1;
-    }
-
     /* --- Main memory block styling --- */
     .memory-block {
         width: 100%;
@@ -89,8 +76,6 @@
     }
 </style>
 
-<!-- Background Blur Layer -->
-<div class="feed-bg"></div>
 
 <div class="container py-5" style="max-width:1250px;margin:auto;">
 
@@ -187,10 +172,10 @@
                 if (entry.isIntersecting) {
                     entry.target.classList.add("animate");
                 } else {
-                    entry.target.classList.remove("animate");
+                    entry.target.classList.remove("animate"); // makes it reanimate if you scroll up
                 }
             });
-        }, { threshold: 0.3 });
+        }, { threshold: 0.35 });
 
         document.querySelectorAll(".memory-block").forEach(block => observer.observe(block));
     });
