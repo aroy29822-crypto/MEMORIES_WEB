@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block body %}
+
+<style>
+    .reset-box {
+        max-width: 450px;
+        margin: 80px auto;
+        background: rgba(0, 0, 0, 0.65);
+        padding: 30px;
+        border-radius: 14px;
+        color: white;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-reset {
+        width: 100%;
+        background: #ffd27f;
+        color: black;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 17px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="reset-box">
+    <h3>Reset Password</h3>
+    <p>OTP sent to <b>{{ email }}</b></p>
+
+    <form method="POST">
+        <label>Enter OTP</label>
+        <input type="text" name="otp" class="form-control mb-3" required>
+
+        <label>New Password</label>
+        <input type="password" name="new_password" class="form-control mb-3" required>
+
+        <button class="btn-reset">Confirm Reset</button>
+    </form>
+
+</div>
+
+{% endblock %}

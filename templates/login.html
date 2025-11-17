@@ -11,37 +11,14 @@
         padding: 40px 35px;
         box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
         color: white;
-        transform: translateX(50px);
+        animation: fadeIn 0.8s ease forwards;
         opacity: 0;
-        animation: slideInLogin 0.8s ease forwards;
     }
 
-    @keyframes slideInLogin {
+    @keyframes fadeIn {
         from {
             opacity: 0;
-            transform: translateX(80px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    .login-box h2 {
-        text-align: center;
-        font-size: 26px;
-        margin-bottom: 25px;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: #ffeecf;
-        animation: fadeDown 0.6s ease forwards;
-    }
-
-    @keyframes fadeDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
+            transform: translateY(25px);
         }
 
         to {
@@ -50,16 +27,24 @@
         }
     }
 
+    .login-box h2 {
+        text-align: center;
+        font-size: 26px;
+        margin-bottom: 25px;
+        font-weight: 600;
+        color: #ffeecf;
+    }
+
     .form-control {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.12);
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 8px;
-        padding: 10px 14px;
+        border-radius: 10px;
+        padding: 12px 14px;
     }
 
     .form-control:focus {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.18);
         border-color: #ffd27f;
         box-shadow: 0 0 10px rgba(255, 210, 127, 0.3);
         color: white;
@@ -74,7 +59,8 @@
         border-radius: 10px;
         padding: 10px;
         font-size: 18px;
-        transition: all 0.3s ease;
+        transition: 0.3s ease;
+        margin-top: 5px;
     }
 
     .btn-login:hover {
@@ -87,9 +73,7 @@
         text-align: center;
         margin-top: 20px;
         color: #ffd27f;
-        text-decoration: none;
         display: block;
-        transition: 0.3s;
     }
 
     .switch-link:hover {
@@ -97,33 +81,81 @@
         text-decoration: underline;
     }
 
-    @media(max-width:600px) {
-        .login-box {
-            width: 90%;
-            padding: 30px 20px;
-        }
-
-        .login-box h2 {
-            font-size: 22px;
-        }
+    .otp-btn {
+        margin-top: 12px;
+        margin-bottom: 10px;
     }
 </style>
+
+<script>
+    function startOtp() {
+        let email = document.querySelector("input[name=email]").value;
+
+        if (!email.endsWith("@gmail.com")) {
+            alert("Only Gmail accounts allowed.");
+            return;
+        }
+
+        fetch("/send_otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "email=" + email
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "no-user") {
+                    alert("No account exists with this email.");
+                } else {
+                    alert("OTP sent to your Gmail.");
+                    document.getElementById("otpBox").style.display = "block";
+                }
+            });
+    }
+
+    function verifyOtp() {
+        let email = document.querySelector("input[name=email]").value;
+        let otp = document.getElementById("otpInput").value;
+
+        fetch("/verify_login_otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "email=" + email + "&otp=" + otp
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    window.location.href = "/feed";
+                } else if (data.status === "wrong") {
+                    alert("Wrong OTP.");
+                } else if (data.status === "expired") {
+                    alert("OTP expired.");
+                }
+            });
+    }
+</script>
 
 <div class="login-box">
     <h2>Welcome Back 👋</h2>
 
     <form method="POST">
-        <div class="mb-3">
-            <label>Email</label>
-            <input type="email" name="email" class="form-control" required>
+
+        <label>Email</label>
+        <input type="email" name="email" class="form-control mb-3" required>
+
+        <div id="otpBox" style="display:none;">
+            <label>Enter OTP</label>
+            <input type="text" id="otpInput" class="form-control mb-2" placeholder="Enter OTP">
+            <button type="button" onclick="verifyOtp()" class="btn btn-success w-100">Verify OTP</button>
+            <a href="{{ url_for('forgot_password') }}" class="switch-link">Forgot Password?</a>
         </div>
 
-        <div class="mb-3">
-            <label>Password</label>
-            <input type="password" name="password" class="form-control" required>
-        </div>
+        <label>Password</label>
+        <input type="password" name="password" class="form-control mb-1" required>
 
-        <button class="btn-login">Login</button>
+        <button type="button" class="btn btn-secondary w-100 otp-btn" onclick="startOtp()">Login with OTP</button>
+
+        <button type="submit" class="btn-login">Login</button>
+
         {% with messages = get_flashed_messages() %}
         {% if messages %}
         <div class="alert alert-danger mt-3">
