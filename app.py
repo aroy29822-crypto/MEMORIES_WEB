@@ -16,7 +16,7 @@ import secrets
 import string
 from time import time
 
-# ---------- Load env ----------
+# ---- Load env -----
 load_dotenv()
 
 # ---------- Flask + DB ----------
