@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Chat</title>
+
+    <!-- Socket.io -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont;
+        }
+
+        body {
+            background: #0b141a;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ===== APP CONTAINER ===== */
+        .app {
+            width: 100%;
+            height: 100%;
+            max-width: 420px;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(18px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            height: 60px;
+            background: #0b141a;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: #e9edef;
+            font-weight: 600;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* ===== CHAT BOX ===== */
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .msg {
+            display: flex;
+            color: black;
+            align-items: flex-end;
+        }
+
+        .msg.other {
+            justify-content: flex-start;
+        }
+
+        .msg.me {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 8px 20px 28px;
+            border-radius: 10px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .msg.me .bubble {
+            background: whitesmoke;
+            border-bottom-right-radius: 0;
+        }
+
+        .msg.other .bubble {
+            background: whitesmoke;
+            border-bottom-left-radius: 0;
+        }
+
+
+        .bubble img.chat-img {
+            max-width: 220px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .edited {
+            font-size: 11px;
+            opacity: 0.6;
+            color: #0b141a;
+            margin-left: 6px;
+        }
+
+        /* ===== TYPING ===== */
+        .typing {
+            font-size: 12px;
+            color: #aaa;
+            padding-left: 12px;
+            height: 18px;
+            display: none;
+        }
+
+
+        /* ===== INPUT BAR ===== */
+        .input-bar {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .input-bar input[type="text"] {
+            flex: 1;
+            background: #202c33;
+            border: none;
+            border-radius: 18px;
+            padding: 10px 14px;
+            color: white;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .input-bar button {
+            background: none;
+            border: none;
+            color: #00a884;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .input-bar button:active {
+            transform: scale(0.9);
+        }
+
+        /* ===== DESKTOP MODE ===== */
+        @media (min-width: 900px) {
+            .app {
+                height: 90vh;
+                max-width: 460px;
+                border-radius: 14px;
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+            }
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #2a3942;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .meta {
+            position: absolute;
+            bottom: 0px;
+            right: 1px;
+            font-size: 7px;
+            display: flex;
+            gap: 3px;
+            opacity: 0.7;
+        }
+
+
+        .tick {
+            font-size: 11px;
+            color: gray;
+        }
+
+        .tick.seen {
+            color: #4fc3f7;
+        }
+
+
+        /* ===== MESSAGE GROUPING ===== */
+        .msg.grouped {
+            margin-top: 2px;
+        }
+
+        .msg:not(.grouped) {
+            margin-top: 10px;
+        }
+
+        /* ===== SCROLL DOWN BUTTON ===== */
+        #scrollDownBtn {
+            position: absolute;
+            bottom: 90px;
+            right: 12px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #103042;
+            color: rgb(221, 212, 212);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        #scrollDownBtn.show {
+            display: block;
+        }
+
+        .msg.unseen .bubble {
+            border-left: 3px solid #00a884;
+        }
+
+        .date-divider {
+            align-self: center;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ccc;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin: 12px 0;
+        }
+
+        .edited {
+            font-size: 10px;
+            opacity: 0.6;
+            color: #0b141a;
+            margin-right: 4px;
+        }
+
+        .edit-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: black;
+            outline: none;
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- HEADER -->
+        <div class="header" onclick="openCommunityInfo()">
+            🏤 Community
+        </div>
+        <script>
+            function openCommunityInfo() {
+                window.location.href = "/community/info";
+            }
+        </script>
+
+
+        <!-- CHAT BOX -->
+        <div id="chat-box" class="chat-box">
+
+
+            {% for m in messages %}
+            {% set prev = messages[loop.index0 - 1] if loop.index0 > 0 else None %}
+            {% set grouped = prev and prev.user == m.user %}
+            {% set prev = messages[loop.index0 - 1] if loop.index0 > 0 else None %}
+            {% if not prev or prev.created_at[:10] != m.created_at[:10] %}
+            <div class="date-divider" data-date="{{ m.created_at }}"></div>
+            {% endif %}
+
+
+
+
+            <div class="msg {{ 'me' if m.user == session['user'] else 'other' }} {{ 'grouped' if grouped else '' }}">
+
+                {% if m.user != session['user'] and not grouped %}
+                <div class="avatar">
+                    {% if m.profile_pic %}
+                    <img src="{{ m.profile_pic }}">
+                    {% else %}
+                    {{ m.user[0]|upper }}
+                    {% endif %}
+
+
+                </div>
+                {% endif %}
+
+
+                <div class="bubble">
+
+                    <div class="text">{{ m.text }}</div>
+
+                    <div class="meta">
+                        <span class="time" data-time="{{ m.created_at }}"></span>
+
+
+                        {% if m.is_me %}
+                        {% if m.status == "sent" %}
+                        <span class="tick">✔</span>
+
+                        {% elif m.status == "delivered" %}
+                        <span class="tick">✔✔</span>
+
+                        {% elif m.status == "seen" %}
+                        <span class="tick seen">✔✔</span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="msg {{ 'unseen' if m.unseen else '' }} ..."></div>
+                </div>
+
+            </div>
+            {% endfor %}
+
+        </div>
+        <button id="scrollDownBtn">⩔</button>
+
+        <!-- TYPING -->
+        <div id="typing" class="typing"></div>
+
+        <!-- INPUT -->
+        <div class="input-bar">
+            <input type="file" id="fileInput" hidden>
+            <button onclick="openFile()">📎</button>
+            <input id="msg" type="text" placeholder="Message" autocomplete="off" oninput="emitTyping()">
+            <button onclick="sendMsg()">➤</button>
+
+        </div>
+
+
+    </div>
+
+
+    </div>
+
+    <script>
+        const CURRENT_USER = "{{ session['user'] }}";
+    </script>
+
+
+
+    <!-- CHAT LOGIC -->
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Community Info</title>
+    <style>
+        body {
+            background: #0b141a;
+            color: white;
+            font-family: system-ui;
+        }
+
+        .header {
+            padding: 16px;
+            font-size: 18px;
+            border-bottom: 1px solid #222;
+        }
+
+        .member {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            cursor: pointer;
+        }
+
+        .member:hover {
+            background: #111;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2a3942;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .online {
+            color: #25d366;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        Community Members
+    </div>
+
+    {% for u in users %}
+    <a href="/user/{{ u.email }}" style="text-decoration:none; color:inherit;">
+        <div class="member">
+            <div class="avatar">
+                {% if u.profile_pic %}
+                <img src="{{ u.profile_pic }}">
+                {% else %}
+                {{ u.first_name[0]|upper }}
+                {% endif %}
+            </div>
+
+            <div>
+                <div>{{ u.first_name }} {{ u.last_name }}</div>
+                <div class="status {{ 'online' if u.online }}">
+                    {{ 'Online' if u.online else 'Offline' }}
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+
+
+</body>
+
+</html>

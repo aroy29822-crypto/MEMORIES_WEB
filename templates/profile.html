@@ -188,6 +188,40 @@
         margin-top: 8px;
         width: 100%;
     }
+
+    /* PROFILE AVATAR */
+    .profile-avatar-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #ffca85;
+        box-shadow: 0 0 20px rgba(255, 202, 133, 0.6);
+    }
+
+    .profile-avatar.letter {
+        background: #00a884;
+        color: #fff;
+        font-size: 42px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .avatar-btn {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #ffd27f;
+        cursor: pointer;
+    }
 </style>
 
 <button id="profile-feedback-btn">💬</button>
@@ -216,6 +250,23 @@
 
 <div class="profile-container" id="profileContainer">
     <div class="profile-header">
+        <div class="profile-avatar-box">
+            {% if user.avatar %}
+            <img src="{{ user.avatar }}" class="profile-avatar">
+            {% else %}
+            <div class="profile-avatar letter">
+                {{ user.first_name[0] }}
+            </div>
+            {% endif %}
+
+            <form action="/profile/avatar" method="POST" enctype="multipart/form-data">
+                <label class="avatar-btn">
+                    Change Photo
+                    <input type="file" name="avatar" accept="image/*" hidden onchange="this.form.submit()">
+                </label>
+            </form>
+        </div>
+
         <h2>Your Memories</h2>
         <p style="opacity:0.8;">All your uploaded photos & videos 🌸</p>
     </div>

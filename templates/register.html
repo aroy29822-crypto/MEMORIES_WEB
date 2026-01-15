@@ -105,25 +105,27 @@
 <div class="register-box">
     <h2>Create Account ✨</h2>
 
-    <form id="regForm">
+    <form method="POST">
+
 
         <label>First Name</label>
         <input type="text" name="first" class="form-control mb-3" required>
 
         <label>Last Name</label>
-        <input type="text" name="last" class="form-control mb-3">
+        <input type="text" name="last" class="form-control mb-3" required>
 
         <label>Email</label>
         <input type="email" name="email" class="form-control mb-2" onkeyup="checkEmail()" required>
         <div id="emailMsg"></div>
 
-        <button type="button" class="btn-register mt-3" onclick="startRegistration()">Register</button>
+        <label>Password</label>
+        <input type="password" name="password" class="form-control mb-3" Placeholder="Create a password" minlength="5"
+            required>
 
-        <div id="loaderBox" class="loader-box">
-            <div class="loader"></div>
-            <p style="margin-top:10px;">Generating a secure password for you…</p>
-            <p style="font-size:13px;">Check your Gmail inbox 📩</p>
-        </div>
+        <button type="submit" class="btn-register mt-3">
+            Register
+        </button>
+
 
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -169,27 +171,7 @@
             });
     }
 
-    function startRegistration() {
-        let form = document.getElementById("regForm");
-        let formData = new FormData(form);
 
-        document.getElementById("loaderBox").style.display = "block";
-
-        fetch("/auto_register", {
-            method: "POST",
-            body: formData
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "ok") {
-                    // Redirect user to login so autofill can happen
-                    window.location.href = "/login";
-                } else {
-                    alert(data.msg);
-                    document.getElementById("loaderBox").style.display = "none";
-                }
-            });
-    }
 </script>
 
 {% endblock %}

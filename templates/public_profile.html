@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{ user.first_name }} {{ user.last_name }}</title>
+    <style>
+        body {
+            background: #0b141a;
+            color: white;
+            font-family: system-ui;
+            padding: 20px;
+        }
+
+        .profile {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .post {
+            background: #202c33;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="profile">
+        {% if user.profile_pic %}
+        <img src="{{ user.profile_pic }}" class="avatar">
+        {% else %}
+        <div class="avatar" style="background:#555;line-height:120px;">
+            {{ user.first_name[0]|upper }}
+        </div>
+        {% endif %}
+
+        <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+        <p>{{ user.email }}</p>
+    </div>
+
+    <h3>Posts</h3>
+
+    {% for p in docs %}
+    <div class="post">
+        {% if p.url %}
+        <img src="{{ p.url }}" style="max-width:100%;border-radius:6px;">
+        {% endif %}
+        <p>{{ p.desc }}</p>
+    </div>
+    {% else %}
+    <p>No posts yet</p>
+    {% endfor %}
+
+</body>
+
+</html>
