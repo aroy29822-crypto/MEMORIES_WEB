@@ -30,7 +30,6 @@ app.secret_key = os.getenv("FLASK_SECRET", secrets.token_hex(32))
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode="eventlet",
     manage_session=True
 )
 
