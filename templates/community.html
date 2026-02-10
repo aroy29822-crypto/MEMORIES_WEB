@@ -269,7 +269,7 @@
 
 <body>
 
-    <div class="app">
+    <div class="app page-transition">
 
         <!-- HEADER -->
         <div class="header" onclick="openCommunityInfo()">
@@ -371,3 +371,11 @@
 </body>
 
 </html>
+<script>
+    window.addEventListener("load", () => {
+        requestAnimationFrame(() => {
+            document.querySelector(".page-transition")
+                ?.classList.add("show");
+        });
+    });
+</script>

@@ -100,6 +100,18 @@
             /* slight dark for readability */
             z-index: -1;
         }
+
+        /* ===== Page transition (Community only) ===== */
+        .page-transition {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        .page-transition.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 
@@ -116,6 +128,12 @@
                 <ul class="navbar-nav ms-auto">
                     {% if 'user' in session %}
                     <li class="nav-item"><a href="{{ url_for('feed') }}" class="nav-link">Feed</a></li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('community') }}" class="nav-link">
+                            Community
+                        </a>
+                    </li>
+
                     <li class="nav-item"><a href="{{ url_for('upload') }}" class="nav-link">Upload</a></li>
                     <li class="nav-item"><a href="{{ url_for('profile') }}" class="nav-link">My Profile</a></li>
 
