@@ -708,7 +708,6 @@ def upload():
     flash("Uploaded successfully.")
     return redirect(url_for("feed"))
 
-
 @app.route("/feed")
 def feed():
     if "user" not in session:
@@ -717,10 +716,13 @@ def feed():
     user = users.find_one({"email": session["user"]})
     show_popup = session.pop("just_logged", None)
 
+    docs = list(posts.find().sort("_id", 1))
+
     return render_template(
         "feed.html",
         firstname=user.get("first_name", "Friend"),
-        show_popup=show_popup
+        show_popup=show_popup,
+        docs=docs
     )
 
 

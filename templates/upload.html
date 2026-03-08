@@ -123,15 +123,39 @@
             font-size: 22px;
         }
     }
+
+    #progressBar {
+        animation: progressGlow 1.2s infinite alternate;
+    }
+
+    @keyframes progressGlow {
+        from {
+            box-shadow: 0 0 5px #ffd27f
+        }
+
+        to {
+            box-shadow: 0 0 20px #ffae42
+        }
+    }
 </style>
 
 
 <div class="upload-container">
     <h2>Upload Your Memory</h2>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="file" class="form-label">Select File (image/video)</label>
             <input type="file" name="file" id="file" class="form-control" required>
+            <div id="previewBox" style="margin-top:15px;display:none;text-align:center;">
+
+                <img id="imagePreview"
+                    style="max-width:100%;max-height:280px;border-radius:10px;display:none;box-shadow:0 0 15px rgba(0,0,0,.5);">
+
+                <video id="videoPreview" controls
+                    style="max-width:100%;max-height:280px;border-radius:10px;display:none;">
+                </video>
+
+            </div>
         </div>
 
         <div class="mb-3">
@@ -150,10 +174,123 @@
                 placeholder="Write something about this memory..." required></textarea>
         </div>
 
-        <button class="btn-upload">Upload Memory</button>
+        <button type="submit" class="btn-upload">Upload Memory</button>
     </form>
+    <div id="uploadProgressBox" style="display:none;margin-top:20px;">
+
+        <div style="background:#222;border-radius:10px;height:22px;overflow:hidden;">
+            <div id="progressBar"
+                style="height:100%;width:0%;background:linear-gradient(90deg,#ffd27f,#ffae42);transition:width .2s;">
+            </div>
+        </div>
+
+        <div id="progressText" style="margin-top:8px;font-weight:600;color:#ffd27f;text-align:center;">
+            Uploading 0%
+        </div>
+
+    </div>
 
     <a href="{{ url_for('feed') }}" class="back-btn">← Back to Feed</a>
 </div>
+<script>
 
+    const form = document.getElementById("uploadForm");
+    const progressBox = document.getElementById("uploadProgressBox");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+
+    form.addEventListener("submit", function (e) {
+
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        const xhr = new XMLHttpRequest();
+
+        progressBox.style.display = "block";
+
+        xhr.upload.addEventListener("progress", function (e) {
+
+            if (e.lengthComputable) {
+
+                let percent = Math.round((e.loaded / e.total) * 100);
+
+                progressBar.style.width = percent + "%";
+
+                progressText.innerText = "Uploading " + percent + "%";
+
+            }
+
+        });
+
+        xhr.onload = function () {
+
+            if (xhr.status == 200) {
+
+                progressText.innerText = "Upload Complete ✔";
+
+                setTimeout(() => {
+                    window.location.href = "/feed";
+                }, 1000);
+
+            }
+
+        };
+
+        xhr.open("POST", "/upload");
+
+        xhr.send(formData);
+
+    });
+
+</script>
+<script>
+
+    const fileInput = document.getElementById("file");
+    const previewBox = document.getElementById("previewBox");
+    const imgPreview = document.getElementById("imagePreview");
+    const vidPreview = document.getElementById("videoPreview");
+
+    fileInput.addEventListener("change", function () {
+
+        const file = this.files[0];
+
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        previewBox.style.display = "block";
+
+        if (file.type.startsWith("image")) {
+
+            imgPreview.src = url;
+            imgPreview.style.display = "block";
+            vidPreview.style.display = "none";
+
+        }
+
+        else if (file.type.startsWith("video")) {
+
+            vidPreview.src = url;
+            vidPreview.style.display = "block";
+            imgPreview.style.display = "none";
+
+        }
+
+    });
+
+
+</script>
+<script>
+    const button = document.querySelector(".btn-upload");
+
+    form.addEventListener("submit", function (e) {
+
+        e.preventDefault();
+
+        button.disabled = true;
+        button.innerText = "Uploading...";
+
+        const formData = new FormData(form);
+</script>
 {% endblock %}

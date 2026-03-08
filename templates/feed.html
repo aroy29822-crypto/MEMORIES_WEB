@@ -74,11 +74,55 @@
             margin-bottom: 60px;
         }
     }
+
+    .like-heart {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        font-size: 80px;
+        color: #ff3b5c;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .like-heart.show {
+        animation: heartPop 0.6s ease forwards;
+    }
+
+    @keyframes heartPop {
+        0% {
+            transform: translate(-50%, -50%) scale(0.3);
+            opacity: 0;
+        }
+
+        50% {
+            transform: translate(-50%, -50%) scale(1.2);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0;
+        }
+    }
 </style>
 
-
+<audio id="scrollTick" src="{{ url_for('static', filename='sounds/tick.mp3') }}" preload="auto"></audio>
 <div class="container py-5" style="max-width:1250px;margin:auto;">
 
+    <div id="mediaModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);
+display:none;justify-content:center;align-items:center;z-index:99999;">
+
+        <span id="closeModal"
+            style="position:absolute;top:25px;right:35px;font-size:40px;color:white;cursor:pointer;">✕</span>
+
+        <img id="modalImg" style="max-width:95%;max-height:95%;display:none;cursor:zoom-in;">
+
+        <video id="modalVideo" controls style="max-width:95%;max-height:95%;display:none;">
+        </video>
+
+    </div>
     {% if show_popup %}
     <div id="welcome-box"
         style="position: fixed; bottom: 18px; left: 18px; max-width: 240px; background: rgba(0,0,0,.68); color: white; padding: 18px 22px; border-radius: 14px; font-size: 19px; z-index: 9999; animation: slideIn .6s forwards, slideOut .6s forwards 2.6s;">
@@ -127,6 +171,7 @@
         {% endif %}
         <div class="memory-text">{{ p.desc }}</div>
         <div style="clear:both"></div>
+        <div class="like-heart">❤</div>
     </div>
     {% endfor %}
 </div>
@@ -179,6 +224,158 @@
 
         document.querySelectorAll(".memory-block").forEach(block => observer.observe(block));
     });
+</script>
+
+<script>
+
+    const modal = document.getElementById("mediaModal");
+    const modalImg = document.getElementById("modalImg");
+    const modalVideo = document.getElementById("modalVideo");
+    const closeModal = document.getElementById("closeModal");
+
+    let zoomLevel = 1;
+
+    function zoomMedia(el, isVideo) {
+
+        modal.style.display = "flex";
+
+        if (isVideo) {
+
+            modalVideo.src = el.dataset.full;
+            modalVideo.style.display = "block";
+            modalImg.style.display = "none";
+
+        } else {
+
+            modalImg.src = el.dataset.full;
+            modalImg.style.display = "block";
+            modalVideo.style.display = "none";
+
+        }
+
+    }
+
+    closeModal.onclick = () => {
+        modal.style.display = "none";
+        modalVideo.pause();
+    }
+
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.style.display = "none";
+            modalVideo.pause();
+        }
+    }
+
+    modalImg.addEventListener("wheel", (e) => {
+
+        e.preventDefault();
+
+        if (e.deltaY < 0) {
+            zoomLevel += 0.15;
+        } else {
+            zoomLevel -= 0.15;
+        }
+
+        zoomLevel = Math.max(1, Math.min(zoomLevel, 4));
+
+        modalImg.style.transform = "scale(" + zoomLevel + ")";
+
+    });
+
+</script>
+
+
+<script>
+
+    let lastScroll = 0;
+    let lastPos = 0;
+    let soundEnabled = false;
+
+    const tick = document.getElementById("scrollTick");
+
+    document.addEventListener("click", () => {
+        soundEnabled = true;
+    });
+
+    window.addEventListener("scroll", () => {
+
+        const now = Date.now();
+        const pos = window.scrollY;
+
+        const speed = Math.abs(pos - lastPos);
+
+        let interval = 160;
+
+        if (speed > 80) interval = 120;
+        else if (speed > 40) interval = 200;
+
+        if (now - lastScroll > interval) {
+
+            if (soundEnabled) {
+                tick.currentTime = 0;
+                tick.volume = 0.06;
+                tick.play().catch(() => { });
+            }
+
+            if (navigator.vibrate) {
+                navigator.vibrate(4);
+            }
+
+            lastScroll = now;
+            lastPos = pos;
+        }
+
+    });
+
+</script>
+<script>
+
+    const tickSound = document.getElementById("scrollTick");
+
+    document.addEventListener("click", function (e) {
+
+        // sound play
+        tickSound.currentTime = 0;
+        tickSound.volume = 0.03;
+        tickSound.playbackRate = 0.95 + Math.random() * 0.1;
+        tickSound.play().catch(() => { });
+
+        // subtle vibration (mobile only)
+        if (navigator.vibrate) {
+            navigator.vibrate(5);
+        }
+
+    });
+
+</script>
+
+<script>
+
+    let lastTap = 0;
+
+    document.querySelectorAll(".picture").forEach(pic => {
+
+        pic.addEventListener("click", function (e) {
+
+            const now = Date.now();
+
+            if (now - lastTap < 300) {
+
+                const heart = this.parentElement.querySelector(".like-heart");
+
+                heart.classList.remove("show");
+                void heart.offsetWidth;
+                heart.classList.add("show");
+
+            }
+
+            lastTap = now;
+
+        });
+
+    });
+
 </script>
 
 {% endblock %}
