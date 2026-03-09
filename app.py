@@ -14,11 +14,12 @@ import smtplib
 from email.message import EmailMessage
 import secrets
 import string
+from datetime import datetime, timezone
 from time import time
 from flask_socketio import SocketIO, emit
 from flask import send_from_directory
 from werkzeug.utils import secure_filename
-from datetime import datetime, timezone
+
 # ---------- Load env ----------
 
 # ---- Load env -----
@@ -881,7 +882,15 @@ def admin_users():
     threshold = utcnow() - timedelta(minutes=3)
     for u in all_users:
         last_active = u.get("last_active")
-        u["is_online"] = bool(last_active and last_active >= threshold)
+    
+        if last_active:
+            # if datetime naive → convert to UTC aware
+            if last_active.tzinfo is None:
+                last_active = last_active.replace(tzinfo=timezone.utc)
+    
+            u["is_online"] = last_active >= threshold
+        else:
+            u["is_online"] = False
         # remove sensitive fields for templates
         u.pop("password", None)
     return render_template("admin_users.html", users=all_users)

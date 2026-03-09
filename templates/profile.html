@@ -251,8 +251,8 @@
 <div class="profile-container" id="profileContainer">
     <div class="profile-header">
         <div class="profile-avatar-box">
-            {% if user.avatar %}
-            <img src="{{ user.avatar }}" class="profile-avatar">
+            {% if user.profile_pic %}
+            <img src="{{ user.profile_pic }}" class="profile-avatar">
             {% else %}
             <div class="profile-avatar letter">
                 {{ user.first_name[0] }}
